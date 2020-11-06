@@ -1,0 +1,4 @@
+﻿<linker>
+	<assembly fullname="Microbenchmarks.Wasm" />
+	<assembly fullname="BenchmarkDotNet" />
+</linker>
