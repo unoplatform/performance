@@ -5,20 +5,22 @@
 		<TargetFramework>net5</TargetFramework>
 		<MonoRuntimeDebuggerEnabled Condition="'$(Configuration)'=='Debug'">true</MonoRuntimeDebuggerEnabled>
 		<WasmShellILLinkerEnabled>false</WasmShellILLinkerEnabled>
+		<LangVersion>9.0</LangVersion>
 		
 		<!-- Uncomment this line to get AOT results -->
 		<!--<WasmShellMonoRuntimeExecutionMode>InterpreterAndAOT</WasmShellMonoRuntimeExecutionMode>-->
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Remove="Benchmarks\Resource\SystemTextBench_LargeDoc.json" />
+	  <Content Remove="Benchmarks\Resource\JsonBench_LargeDoc.json" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Include="Benchmarks\Resource\SystemTextBench_LargeDoc.json" />
+	  <EmbeddedResource Include="Benchmarks\Resource\JsonBench_LargeDoc.json" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
 		<PackageReference Include="Uno.BenchmarkDotNet" Version="0.11.6-develop" />
 		<PackageReference Include="Uno.BenchmarkDotNet.Annotations" Version="0.11.6-develop" />
 		<PackageReference Include="Uno.Wasm.Bootstrap" Version="2.0.0-dev.67" />

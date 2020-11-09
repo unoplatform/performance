@@ -2,12 +2,28 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
+#if NET5_0
 using System.Text.Json;
+#endif
 
 namespace Microbenchmarks
 {
-	public class SystemTextBench
+	public class JsonBench
     {
+        private string value;
+
+        public JsonBench()
+        {
+            var name = this.GetType().Assembly
+                .GetManifestResourceNames()
+                .First(n => n.EndsWith("JsonBench_LargeDoc.json"));
+
+            using var reader = new StreamReader(this.GetType().Assembly.GetManifestResourceStream(name));
+            value = reader.ReadToEnd();
+        }
+
+#if NET5_0
         private readonly JsonSerializerOptions options = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
 
         private const string _jsonStringPascalCase = "{\"MyString\" : \"abc\", \"MyInteger\" : 123, \"MyList\" : [\"abc\", \"123\"]}";
@@ -37,22 +53,18 @@ namespace Microbenchmarks
             return JsonSerializer.Deserialize<MyClass>(_jsonStringCamelCase, options);
         }
 
-        private string value;
-
-        public SystemTextBench()
-        {
-            var name = this.GetType().Assembly
-                .GetManifestResourceNames()
-                .First(n => n.EndsWith("SystemTextBench_LargeDoc.json"));
-
-            using var reader = new StreamReader(this.GetType().Assembly.GetManifestResourceStream(name));
-            value = reader.ReadToEnd();
-        }
 
         [Benchmark]
-        public MyClass LargeDoc()
+        public MyClass SystemText_LargeDoc()
         {
             return JsonSerializer.Deserialize<MyClass>(value);
+        }
+#endif
+
+        [Benchmark]
+        public MyClass JsonNet_LargeDoc()
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<MyClass>(value);
         }
     }
 
