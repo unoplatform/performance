@@ -42,6 +42,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Uno.BenchmarkDotNet" Version="0.11.7-develop" />
+    <PackageReference Include="Uno.BenchmarkDotNet.Annotations" Version="0.11.7-develop" />
     <PackageReference Include="Uno.Extensions.Logging.WebAssembly.Console" Version="1.0.1" />
     <PackageReference Include="Uno.UI.WebAssembly" Version="4.0.11" />
     <PackageReference Include="Uno.UI.RemoteControl" Version="4.0.11" Condition="'$(Configuration)'=='Debug'" />
