@@ -1,0 +1,21 @@
+{
+  "solution": {
+    "path": "Benchmarks.sln",
+    "projects": [
+		"Benchmarks.Shared\\Benchmarks.Shared.shproj",
+
+		"Benchmarks.Droid\\Benchmarks.Droid.csproj",
+
+		"Benchmarks.iOS\\Benchmarks.iOS.csproj",
+
+
+		"Benchmarks.Wasm\\Benchmarks.Wasm.csproj",
+
+		"Benchmarks.macOS\\Benchmarks.macOS.csproj",
+
+		"Benchmarks.Skia.Gtk\\Benchmarks.Skia.Gtk.csproj",
+
+		"Benchmarks.Skia.Linux.FrameBuffer\\Benchmarks.Skia.Linux.FrameBuffer.csproj",
+    ]
+  }
+}
