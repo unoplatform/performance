@@ -70,6 +70,11 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="nventive.Nimue.Application.Packaging">
+      <Version>0.1.0-alpha.89</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Uno.BenchmarkDotNet">
       <Version>0.11.7-develop</Version>
     </PackageReference>
@@ -130,5 +135,11 @@
     <ItemGroup>
       <ReferencePath Remove="@(_ReferencePathToRemove)" />
     </ItemGroup>
+  </Target>
+  <Target Name="_CopyPackageToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <_Packages Include="$(TargetDir)\*.pkg" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_Packages)" DestinationFolder="$(PackageOutputPath)" />
   </Target>
 </Project>

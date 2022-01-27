@@ -1,0 +1,101 @@
+trigger:
+  branches:
+    include:
+    - master
+
+pr:
+  branches:
+    include:
+    - master
+
+jobs:
+  - job: Windows
+    pool:
+      vmImage: windows-2019
+
+    strategy:
+      matrix:
+        Android:
+          Project: src/Benchmarks/Benchmarks.Droid/Benchmarks.Droid.csproj
+          ApplicationPlatform: AnyCPU
+          ArtifactName: Android
+        SkiaGTK:
+          Project: src/Benchmarks/Benchmarks.Skia.Gtk/Benchmarks.Skia.Gtk.csproj
+          ApplicationPlatform: AnyCPU
+          ArtifactName: SkiaGTK
+        UWP:
+          Project: src/Benchmarks/Benchmarks.UWP/Benchmarks.Uwp.csproj
+          ApplicationPlatform: x64
+          ArtifactName: UWP
+        WASM:
+          Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
+          ApplicationPlatform: AnyCPU
+          ArtifactName: WASM
+
+    steps:
+    - script: |
+        dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
+        dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
+      displayName: GitVersion
+
+    - task: MSBuild@1
+      displayName: Build project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: $(Project)
+        platform: $(ApplicationPlatform)
+        msbuildArguments: /ds /m /r /p:Configuration=Release
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: $(ArtifactName)
+
+  - job: macOS
+    pool:
+      vmImage: macos-10.15
+
+    strategy:
+      matrix:
+        iOS:
+          Project: src/Benchmarks/Benchmarks.iOS/Benchmarks.iOS.csproj
+          ApplicationPlatform: iPhone
+          ArtifactName: iOS
+        macOS:
+          Project: src/Benchmarks/Benchmarks.macOS/Benchmarks.macOS.csproj
+          ApplicationPlatform: iPhoneSimulator
+          ArtifactName: macOS
+
+    variables:
+    - group: apple.appstore.distribution
+
+    steps:
+    - task: InstallAppleCertificate@2
+      displayName: Install Certificate
+      inputs:
+        certSecureFile: apple.appstore.distribution.p12
+        certPwd: $(appleappstorecertificatepassword)
+        keychain: temp
+        deleteCert: true
+
+    - task: InstallAppleProvisioningProfile@1
+      displayName: Install Provisioning Profile
+      inputs:
+        provisioningProfileLocation: secureFiles
+        provProfileSecureFile: UnoPerformance.mobileprovision
+
+    - script: |
+        dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
+        ./dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
+      displayName: GitVersion
+
+    - task: MSBuild@1
+      displayName: Build project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: $(Project)
+        platform: $(ApplicationPlatform)
+        msbuildArguments: /ds /m /r /p:Configuration=Release
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: $(ArtifactName)

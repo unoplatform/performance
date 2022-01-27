@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <NoWarn>NU1701</NoWarn>
+    <WasmHead>true</WasmHead>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <MonoRuntimeDebuggerEnabled>true</MonoRuntimeDebuggerEnabled>
@@ -42,6 +43,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="nventive.Nimue.Application.Packaging" Version="0.1.0-alpha.89">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Uno.BenchmarkDotNet" Version="0.11.7-develop" />
     <PackageReference Include="Uno.BenchmarkDotNet.Annotations" Version="0.11.7-develop" />
     <PackageReference Include="Uno.Extensions.Logging.WebAssembly.Console" Version="1.0.1" />
