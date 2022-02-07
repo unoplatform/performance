@@ -1,0 +1,3 @@
+namespace Benchmarks.Skia.Gtk
+{
+}
