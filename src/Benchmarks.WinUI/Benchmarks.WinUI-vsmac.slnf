@@ -1,0 +1,14 @@
+{
+  "solution": {
+    "path": "Benchmarks.WinUI.sln",
+    "projects": [
+		"Benchmarks.WinUI.Shared\\Benchmarks.WinUI.Shared.shproj",
+
+		"Benchmarks.WinUI.Mobile\\Benchmarks.WinUI.Mobile.csproj",
+
+		"Benchmarks.WinUI.Wasm\\Benchmarks.WinUI.Wasm.csproj",
+
+		"Benchmarks.WinUI.Skia.Gtk\\Benchmarks.WinUI.Skia.Gtk.csproj",
+    ]
+  }
+}
