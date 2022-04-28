@@ -40,7 +40,7 @@ namespace Benchmarks.Maui.Controls
                     // Warmup
                     await RunTest(benchmark);
 
-                    for (int x = 0; x < 10; x++)
+                    for (int x = 0; x < 20; x++)
                     {
                         var result = await RunTest(benchmark);
 
