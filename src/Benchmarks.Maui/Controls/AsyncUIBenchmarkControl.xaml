@@ -24,6 +24,8 @@
                 <Editor x:Name="Log"
                        FontFamily="Courier New"
                        FontSize="12"
+                       HeightRequest="500"
+                       VerticalOptions="FillAndExpand"
                        TextColor="White" />
             </ScrollView>
             <ContentView x:Name="UIHost" Grid.Column="1" />
