@@ -4,5 +4,16 @@
              xmlns:controls="clr-namespace:Benchmarks.Maui.Controls"
              x:Class="Benchmarks.Maui.MainPage">
 
-    <controls:AsyncUIBenchmarkControl />
+    <StackLayout>
+        <StackLayout Orientation="Horizontal" Margin="15, 15, 0, 0" Spacing="15">
+            <RadioButton Content="BenchmarkDotNet"
+                         GroupName="BenchmarkType" />
+
+            <RadioButton Content="Async UI Benchmarks"
+                         GroupName="BenchmarkType" />
+        </StackLayout>
+        <ContentView>
+            <controls:AsyncUIBenchmarkControl />
+        </ContentView>
+    </StackLayout>
 </ContentPage>

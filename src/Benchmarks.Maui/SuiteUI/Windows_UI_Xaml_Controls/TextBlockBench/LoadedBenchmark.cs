@@ -1,7 +1,7 @@
 using Benchmarks.Maui.Benchmarking;
 using Benchmarks.Maui.Controls;
 
-namespace Benchmarks.Maui.SuiteUI.Microsoft_Maui_Controls.LabelBench
+namespace Benchmarks.Maui.SuiteUI.Windows_UI_Xaml_Controls.TextBlockBench
 {
     internal class LoadedBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
     {
@@ -15,7 +15,8 @@ namespace Benchmarks.Maui.SuiteUI.Microsoft_Maui_Controls.LabelBench
 
             _sut = new Label();
             _sut.Text = "Hello Uno!";
-            _sut.Loaded += (s, e) => _tcs.SetResult(true);
+
+            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
 
             return Task.CompletedTask;
         }

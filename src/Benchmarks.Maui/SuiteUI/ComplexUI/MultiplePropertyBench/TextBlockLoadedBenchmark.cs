@@ -3,7 +3,7 @@ using Benchmarks.Maui.Controls;
 
 namespace Benchmarks.Maui.SuiteUI.ComplexUI.MultiplePropertyBench
 {
-    internal class LabelLoadedBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
+    internal class TextBlockLoadedBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
     {
         private Label _sut;
 
@@ -24,7 +24,8 @@ namespace Benchmarks.Maui.SuiteUI.ComplexUI.MultiplePropertyBench
                 TextDecorations = TextDecorations.Strikethrough,
                 WidthRequest = 150d
             };
-            _sut.Loaded += (s, e) => _tcs.SetResult(true);
+
+            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
 
             return Task.CompletedTask;
         }

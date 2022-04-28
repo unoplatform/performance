@@ -22,11 +22,11 @@
                           HorizontalScrollMode="Enabled"
                           HorizontalScrollBarVisibility="Visible"
                           Padding="12">
-                <TextBlock x:Name="Log"
-                           FontFamily="Courier New"
-                           FontSize="12"
-                           Foreground="White"
-                           IsTextSelectionEnabled="True" />
+                <TextBox x:Name="Log"
+                         AcceptsReturn="True"
+                         FontFamily="Courier New"
+                         FontSize="12"
+                         Foreground="White" />
             </ScrollViewer>
             <ContentControl x:Name="UIHost" Grid.Column="1" />
         </Grid>

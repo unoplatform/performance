@@ -23,8 +23,8 @@ namespace Benchmarks.WinUI.Shared.SuiteUI.Windows_UI_Xaml_Controls.TextBlockBenc
                 _sut.Children.Add(new TextBlock() { Text = "Hello Uno!" });
             }
 
-            _sut.Loaded += (s, e) => _tcs.SetResult(true);
-            
+            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
+
             return Task.CompletedTask;
         }
 

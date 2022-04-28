@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace Benchmarks.WinUI.Shared.SuiteUI.ComplexUI.FormBench
 {
@@ -35,7 +36,7 @@ namespace Benchmarks.WinUI.Shared.SuiteUI.ComplexUI.FormBench
             Grid.SetRow(email, 1);
             Grid.SetColumn(email, 1);
 
-            var age = new NumberBox();
+            var age = new TextBox() { InputScope = new InputScope() { Names = { new InputScopeName(InputScopeNameValue.Number) } } };
             Grid.SetRow(age, 2);
             Grid.SetColumn(age, 1);
 

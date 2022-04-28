@@ -1,32 +1,28 @@
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml.Controls;
 
 using Benchmarks.WinUI.Shared.Benchmarking;
 using Benchmarks.WinUI.Shared.Controls;
 
-namespace Benchmarks.WinUI.Shared.SuiteUI.Windows_UI_Xaml_Controls.TextBlockBench
+namespace Benchmarks.WinUI.Shared.SuiteUI.ComplexUI.FormBench
 {
-    internal class LoadedBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
+    internal class FormInitializeAndLoadBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
     {
-        private TextBlock _sut;
-
         private TaskCompletionSource<bool> _tcs;
 
         public Task SetupAsync()
         {
             _tcs = new TaskCompletionSource<bool>();
 
-            _sut = new TextBlock();
-            _sut.Text = "Hello Uno!";
-
-            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
-
             return Task.CompletedTask;
         }
 
         public Task BenchmarkAsync()
         {
-            AsyncUIBenchmarkHost.Root.Content = _sut;
+            var sut = FormBenchHelper.MakeGrid();
+
+            AsyncUIBenchmarkHost.WaitForIdle(sut, () => _tcs.SetResult(true));
+
+            AsyncUIBenchmarkHost.Root.Content = sut;
 
             return _tcs.Task;
         }

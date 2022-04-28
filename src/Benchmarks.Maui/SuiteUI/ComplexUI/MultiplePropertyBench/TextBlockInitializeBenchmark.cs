@@ -2,7 +2,7 @@ using Benchmarks.Maui.Benchmarking;
 
 namespace Benchmarks.Maui.SuiteUI.ComplexUI.MultiplePropertyBench
 {
-    internal class LabelInitializeBenchmark : IAsyncUIBenchmark
+    internal class TextBlockInitializeBenchmark : IAsyncUIBenchmark
     {
         public Task BenchmarkAsync()
         {

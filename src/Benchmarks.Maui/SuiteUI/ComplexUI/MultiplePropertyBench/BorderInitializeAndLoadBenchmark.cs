@@ -5,17 +5,20 @@ using Benchmarks.Maui.Controls;
 
 namespace Benchmarks.Maui.SuiteUI.ComplexUI.MultiplePropertyBench
 {
-    internal class BorderLoadedBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
+    internal class BorderInitializeAndLoadBenchmark : IAsyncUIBenchmark, IAsyncUIBenchmarkSetup
     {
-        private Border _sut;
-
         private TaskCompletionSource<bool> _tcs;
 
         public Task SetupAsync()
         {
             _tcs = new TaskCompletionSource<bool>();
 
-            _sut = new Border()
+            return Task.CompletedTask;
+        }
+
+        public Task BenchmarkAsync()
+        {
+            var sut = new Border()
             {
                 Background = new SolidColorBrush(Colors.Yellow),
                 Stroke = new SolidColorBrush(Colors.Black),
@@ -26,14 +29,9 @@ namespace Benchmarks.Maui.SuiteUI.ComplexUI.MultiplePropertyBench
                 Content = new Label() { Text = "BORDERLINE" }
             };
 
-            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
+            AsyncUIBenchmarkHost.WaitForIdle(sut, () => _tcs.SetResult(true));
 
-            return Task.CompletedTask;
-        }
-
-        public Task BenchmarkAsync()
-        {
-            AsyncUIBenchmarkHost.Root.Content = _sut;
+            AsyncUIBenchmarkHost.Root.Content = sut;
 
             return _tcs.Task;
         }

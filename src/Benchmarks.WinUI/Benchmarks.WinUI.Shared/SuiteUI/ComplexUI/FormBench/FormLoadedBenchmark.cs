@@ -17,7 +17,8 @@ namespace Benchmarks.WinUI.Shared.SuiteUI.ComplexUI.FormBench
             _tcs = new TaskCompletionSource<bool>();
 
             _sut = FormBenchHelper.MakeGrid();
-            _sut.Loaded += (s, e) => _tcs.SetResult(true);
+
+            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
 
             return Task.CompletedTask;
         }

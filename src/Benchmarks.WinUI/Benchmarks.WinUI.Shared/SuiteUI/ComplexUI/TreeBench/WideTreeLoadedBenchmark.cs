@@ -17,7 +17,8 @@ namespace Benchmarks.WinUI.Shared.SuiteUI.TreeBench
             _tcs = new TaskCompletionSource<bool>();
 
             _sut = MakePanel();
-            _sut.Loaded += (s, e) => _tcs.SetResult(true);
+
+            AsyncUIBenchmarkHost.WaitForIdle(_sut, () => _tcs.SetResult(true));
 
             return Task.CompletedTask;
         }

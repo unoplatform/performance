@@ -21,7 +21,7 @@
                         Background="Black"
                         HorizontalScrollBarVisibility="Always"
                         Padding="12">
-                <Label x:Name="Log"
+                <Editor x:Name="Log"
                        FontFamily="Courier New"
                        FontSize="12"
                        TextColor="White" />
