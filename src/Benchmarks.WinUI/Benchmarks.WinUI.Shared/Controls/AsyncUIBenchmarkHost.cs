@@ -20,6 +20,12 @@ namespace Benchmarks.WinUI.Shared.Controls
             void OnTimerTick(DispatcherQueueTimer sender, object args)
             {
                 action();
+
+#if !WINDOWS
+                // Stopping a timer on windows is very expensive
+                timer.Stop();
+#endif
+
                 timer.Tick -= OnTimerTick;
             }
         }
