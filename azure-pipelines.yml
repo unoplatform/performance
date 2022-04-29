@@ -76,14 +76,6 @@ jobs:
         dotnet build -c Release $(Project)
       displayName: Build
 
-    - task: MSBuild@1
-      displayName: Build project
-      retryCountOnTaskFailure: 3
-      inputs:
-        solution: $(Project)
-        platform: $(ApplicationPlatform)
-        msbuildArguments: /ds /m /r /p:Configuration=Release
-
     - task: PublishBuildArtifacts@1
       inputs:
         artifactName: $(ArtifactName)
