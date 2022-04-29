@@ -64,6 +64,12 @@ jobs:
           Project: 
 
     steps:
+    - template: build/ci/templates/dotnet6-install-windows.yml
+
+    - script: |
+        dotnet workload maui --from-rollback-file https://aka.ms/dotnet/maui/rc.1.json --source    https://aka.ms/dotnet6/nuget/index.json --source https://api.nuget.org/v3/index.json
+      displayName: Maui Workloads
+
     - script: |
         dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
         dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
