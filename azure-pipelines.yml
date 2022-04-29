@@ -31,10 +31,6 @@ jobs:
           Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: WASM
-        WinUI_WinAppSDK:
-          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
-          ApplicationPlatform: x64
-          ArtifactName: net6-winui
 
     steps:
     - script: |
@@ -50,15 +46,6 @@ jobs:
         platform: $(ApplicationPlatform)
         msbuildArguments: /ds /m /r /p:Configuration=Release
 
-    - task: CopyFiles@2
-      displayName: 'Publish WinAppSDK Binaries'
-      retryCountOnTaskFailure: 3
-      inputs:
-        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.WinUI/Benchmarks.WinUI.Windows
-        Contents: |
-          **/*.msix
-        TargetFolder: $(build.artifactstagingdirectory)
-
     - task: PublishBuildArtifacts@1
       inputs:
         artifactName: $(ArtifactName)
@@ -66,11 +53,6 @@ jobs:
   - job: Windows_Maui
     pool:
       vmImage: windows-2022
-
-    strategy:
-      matrix:
-        Main:
-          Project: 
 
     steps:
     - template: build/ci/templates/dotnet6-install-windows.yml
@@ -97,9 +79,10 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/*.aab
-          **/*.apk
-        TargetFolder: $(build.artifactstagingdirectory)
+          **/bin/Release/**/*.aab
+          **/bin/Release/**/*.apk
+          **/bin/Release/**/*.msix
+        TargetFolder: maui
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -108,12 +91,6 @@ jobs:
   - job: Windows_WinUI_Dotnet
     pool:
       vmImage: windows-2022
-
-    strategy:
-      matrix:
-        Mobile:
-          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj
-          ArtifactName: net6-winui-mobile
 
     steps:
     - template: build/ci/templates/dotnet6-install-windows.yml
@@ -124,8 +101,16 @@ jobs:
       displayName: GitVersion
 
     - script: |
-        dotnet build -c Release $(Project)
-      displayName: Build
+        dotnet publish -f:net6.0-android -c:Release src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj
+      displayName: Build Android Project
+
+    - task: MSBuild@1
+      displayName: Build WinAppSDK project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
+        platform: x64
+        msbuildArguments: /ds /m /r /p:Configuration=Release
 
     - task: CopyFiles@2
       displayName: 'Publish net6 Binaries'
@@ -133,13 +118,14 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/*.aab
-          **/*.apk
+          **/bin/Release/**/*.aab
+          **/bin/Release/**/*.apk
+          **/bin/Release/**/*.msix
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
       inputs:
-        artifactName: $(ArtifactName)
+        artifactName: net6-winui-mobile
 
   - job: macOS
     pool:
