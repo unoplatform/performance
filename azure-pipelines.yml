@@ -54,6 +54,32 @@ jobs:
       inputs:
         artifactName: $(ArtifactName)
 
+  - job: Windows_Maui
+    pool:
+      vmImage: windows-2022
+
+    strategy:
+      matrix:
+        Main:
+          Project: 
+
+    steps:
+    - script: |
+        dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
+        dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
+      displayName: GitVersion
+
+    - task: MSBuild@1
+      displayName: Build project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
+        msbuildArguments: /ds /m /r /p:Configuration=Release
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: $(ArtifactName)
+
   - job: Windows_WinUI_Dotnet
     pool:
       vmImage: windows-2022
