@@ -91,15 +91,15 @@ jobs:
         solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
         msbuildArguments: /ds /m /r /p:Configuration=Release
 
-  - task: CopyFiles@2
-    displayName: 'Publish net6 Binaries'
-    retryCountOnTaskFailure: 3
-    inputs:
-      SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
-      Contents: |
-        **/*.aab
-        **/*.apk
-      TargetFolder: $(build.artifactstagingdirectory)
+    - task: CopyFiles@2
+      displayName: 'Publish net6 Binaries'
+      retryCountOnTaskFailure: 3
+      inputs:
+        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+        Contents: |
+          **/*.aab
+          **/*.apk
+        TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
       inputs:
