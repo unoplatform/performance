@@ -79,9 +79,9 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/bin/Release/**/*.aab
-          **/bin/Release/**/*.apk
-          **/bin/Release/**/*.msix
+          **/Release/**/*.aab
+          **/Release/**/*.apk
+          **/Release/**/*.msix
         TargetFolder: maui
 
     - task: PublishBuildArtifacts@1
@@ -118,9 +118,9 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/bin/Release/**/*.aab
-          **/bin/Release/**/*.apk
-          **/bin/Release/**/*.msix
+          **/Release/**/*.aab
+          **/Release/**/*.apk
+          **/Release/**/*.msix
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
