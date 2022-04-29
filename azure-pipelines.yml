@@ -67,7 +67,7 @@ jobs:
     - template: build/ci/templates/dotnet6-install-windows.yml
 
     - script: |
-        dotnet workload maui --from-rollback-file https://aka.ms/dotnet/maui/rc.1.json --source    https://aka.ms/dotnet6/nuget/index.json --source https://api.nuget.org/v3/index.json
+        dotnet workload install maui --from-rollback-file https://aka.ms/dotnet/maui/rc.1.json --source    https://aka.ms/dotnet6/nuget/index.json --source https://api.nuget.org/v3/index.json
       displayName: Maui Workloads
 
     - script: |
