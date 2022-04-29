@@ -55,6 +55,8 @@ namespace Benchmarks.Shared.Controls
 
                         await (setupTeardown?.TeardownAsync() ?? Task.CompletedTask);
 
+                        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+
                         times.Add(sw.ElapsedTicks);
                     }
 

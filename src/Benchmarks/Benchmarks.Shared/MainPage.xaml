@@ -9,17 +9,17 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <muxc:TabView IsAddTabButtonVisible="False">
-            <muxc:TabView.TabItems>
-                <muxc:TabViewItem Header="BenchmarkDotNet" IsClosable="False">
-                    <controls:BenchmarkDotNetControl />
-                </muxc:TabViewItem>
+    <StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="15, 15, 0, 0" Spacing="15">
+            <RadioButton Content="BenchmarkDotNet"
+                         GroupName="BenchmarkType"
+                         Checked="HandleCheck" />
 
-                <muxc:TabViewItem Header="Async UI Benchmarks" IsClosable="False">
-                    <controls:AsyncUIBenchmarkControl />
-                </muxc:TabViewItem>
-            </muxc:TabView.TabItems>
-        </muxc:TabView>
-    </Grid>
+            <RadioButton Content="Async UI Benchmarks"
+                         GroupName="BenchmarkType"
+                         Checked="HandleCheck" />
+        </StackPanel>
+
+        <ContentControl x:Name="BenchmarkControl" />
+    </StackPanel>
 </Page>

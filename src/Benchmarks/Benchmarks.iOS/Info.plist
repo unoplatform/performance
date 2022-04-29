@@ -52,6 +52,6 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>CFBundleIdentifier</key>
-	<string>com.nventive.uno.performance</string>
+	<string>uno.platform.performance</string>
 </dict>
 </plist>

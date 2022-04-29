@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:Benchmarks.Maui.Controls"
+             x:Class="Benchmarks.Maui.MainPage">
+
+    <StackLayout>
+        <StackLayout Orientation="Horizontal" Margin="15, 15, 0, 0" Spacing="15">
+            <RadioButton Content="BenchmarkDotNet"
+                         GroupName="BenchmarkType" />
+
+            <RadioButton Content="Async UI Benchmarks"
+                         GroupName="BenchmarkType" />
+        </StackLayout>
+        <ContentView>
+            <controls:AsyncUIBenchmarkControl />
+        </ContentView>
+    </StackLayout>
+</ContentPage>

@@ -1,0 +1,34 @@
+﻿<UserControl
+    x:Class="Benchmarks.WinUI.Shared.Controls.AsyncUIBenchmarkControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <Button Content="Run Benchmarks" Click="RunBenchmarks_Click" />
+            <TextBlock x:Name="Status" />
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ScrollViewer Grid.Column="0"
+                          Background="Black"
+                          HorizontalScrollMode="Enabled"
+                          HorizontalScrollBarVisibility="Visible"
+                          Padding="12">
+                <TextBox x:Name="Log"
+                         AcceptsReturn="True"
+                         FontFamily="Courier New"
+                         FontSize="12"
+                         Foreground="White" />
+            </ScrollViewer>
+            <ContentControl x:Name="UIHost" Grid.Column="1" />
+        </Grid>
+    </Grid>
+</UserControl>

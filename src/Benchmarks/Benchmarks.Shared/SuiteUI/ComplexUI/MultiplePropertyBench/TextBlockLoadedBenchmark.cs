@@ -32,7 +32,7 @@ namespace Benchmarks.Shared.SuiteUI.ComplexUI.MultiplePropertyBench
                 TextDecorations = TextDecorations.Strikethrough,
                 Width = 150d
             };
-            _sut.Loaded += (s, e) => _tcs.TrySetResult(true);
+            _sut.Loaded += (s, e) => _tcs.SetResult(true);
 
             return Task.CompletedTask;
         }

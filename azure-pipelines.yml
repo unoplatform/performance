@@ -11,7 +11,7 @@ pr:
 jobs:
   - job: Windows
     pool:
-      vmImage: windows-2019
+      vmImage: windows-2022
 
     strategy:
       matrix:
@@ -31,6 +31,10 @@ jobs:
           Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: WASM
+        WinUI_WinAppSDK:
+          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
+          ApplicationPlatform: x64
+          ArtifactName: net6-winui
 
     steps:
     - script: |
@@ -45,6 +49,64 @@ jobs:
         solution: $(Project)
         platform: $(ApplicationPlatform)
         msbuildArguments: /ds /m /r /p:Configuration=Release
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: $(ArtifactName)
+
+  - job: Windows_Maui
+    pool:
+      vmImage: windows-2022
+
+    strategy:
+      matrix:
+        Main:
+          Project: 
+
+    steps:
+    - template: build/ci/templates/dotnet6-install-windows.yml
+
+    - script: |
+        dotnet workload install maui --from-rollback-file https://aka.ms/dotnet/maui/rc.1.json --source    https://aka.ms/dotnet6/nuget/index.json --source https://api.nuget.org/v3/index.json
+      displayName: Maui Workloads
+
+    - script: |
+        dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
+        dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
+      displayName: GitVersion
+
+    - task: MSBuild@1
+      displayName: Build project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
+        msbuildArguments: /ds /m /r /p:Configuration=Release
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: $(ArtifactName)
+
+  - job: Windows_WinUI_Dotnet
+    pool:
+      vmImage: windows-2022
+
+    strategy:
+      matrix:
+        Mobile:
+          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj
+          ArtifactName: net6-winui-mobile
+
+    steps:
+    - template: build/ci/templates/dotnet6-install-windows.yml
+
+    - script: |
+        dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
+        dotnet-gitversion $(Build.SourcesDirectory) /output json /output buildserver
+      displayName: GitVersion
+
+    - script: |
+        dotnet build -c Release $(Project)
+      displayName: Build
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -66,22 +128,34 @@ jobs:
           ArtifactName: macOS
 
     variables:
-    - group: apple.appstore.distribution
+    - group: unoplatform.apple.ios.appstore.distribution
 
     steps:
     - task: InstallAppleCertificate@2
       displayName: Install Certificate
       inputs:
-        certSecureFile: apple.appstore.distribution.p12
+        certSecureFile: UnoPlatform-Apple-Distribution.p12
         certPwd: $(appleappstorecertificatepassword)
         keychain: temp
         deleteCert: true
-
+    
     - task: InstallAppleProvisioningProfile@1
       displayName: Install Provisioning Profile
       inputs:
         provisioningProfileLocation: secureFiles
-        provProfileSecureFile: UnoPerformance.mobileprovision
+        provProfileSecureFile: Uno_Performance_Benchmarks_iOS.mobileprovision
+    
+    - task: InstallAppleProvisioningProfile@1
+      displayName: Install Provisioning Profile
+      inputs:
+        provisioningProfileLocation: secureFiles
+        provProfileSecureFile: Uno_Performance_Benchmarks_mac.provisionprofile
+    
+    - task: InstallAppleProvisioningProfile@1
+      displayName: Install Provisioning Profile
+      inputs:
+        provisioningProfileLocation: secureFiles
+        provProfileSecureFile: Uno_Performance_Benchmarks_Catalyst.provisionprofile
 
     - script: |
         dotnet tool install GitVersion.Tool --version 5.8.1 --tool-path .
