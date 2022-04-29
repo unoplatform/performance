@@ -79,14 +79,14 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/Release/**/*.aab
-          **/Release/**/*.apk
-          **/Release/**/*.msix
-        TargetFolder: maui
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
+        TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
       inputs:
-        artifactName: $(ArtifactName)
+        artifactName: maui
 
   - job: Windows_WinUI_Dotnet
     pool:
@@ -118,9 +118,9 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/Release/**/*.aab
-          **/Release/**/*.apk
-          **/Release/**/*.msix
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
