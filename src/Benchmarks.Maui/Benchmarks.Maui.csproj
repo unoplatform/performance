@@ -13,7 +13,7 @@
 		<ApplicationTitle>Benchmarks.Maui</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.benchmarks.maui</ApplicationId>
+		<ApplicationId>uno.platform.performance</ApplicationId>
 		<ApplicationId Condition="$(TargetFramework.Contains('-windows'))">b7e97853-f089-48c4-93aa-a069ed83ef22</ApplicationId>
 
 		<!-- Versions -->
