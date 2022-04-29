@@ -50,6 +50,15 @@ jobs:
         platform: $(ApplicationPlatform)
         msbuildArguments: /ds /m /r /p:Configuration=Release
 
+    - task: CopyFiles@2
+      displayName: 'Publish WinAppSDK Binaries'
+      retryCountOnTaskFailure: 3
+      inputs:
+        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.WinUI/Benchmarks.WinUI.Windows
+        Contents: |
+          **/*.msix
+        TargetFolder: $(build.artifactstagingdirectory)
+
     - task: PublishBuildArtifacts@1
       inputs:
         artifactName: $(ArtifactName)
@@ -82,6 +91,16 @@ jobs:
         solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
         msbuildArguments: /ds /m /r /p:Configuration=Release
 
+  - task: CopyFiles@2
+    displayName: 'Publish net6 Binaries'
+    retryCountOnTaskFailure: 3
+    inputs:
+      SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+      Contents: |
+        **/*.aab
+        **/*.apk
+      TargetFolder: $(build.artifactstagingdirectory)
+
     - task: PublishBuildArtifacts@1
       inputs:
         artifactName: $(ArtifactName)
@@ -107,6 +126,16 @@ jobs:
     - script: |
         dotnet build -c Release $(Project)
       displayName: Build
+
+    - task: CopyFiles@2
+      displayName: 'Publish net6 Binaries'
+      retryCountOnTaskFailure: 3
+      inputs:
+        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+        Contents: |
+          **/*.aab
+          **/*.apk
+        TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
       inputs:
