@@ -71,7 +71,7 @@ jobs:
       retryCountOnTaskFailure: 3
       inputs:
         solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
-        msbuildArguments: /ds /m /r /p:Configuration=Release
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/maui-build.binlog
 
     - task: CopyFiles@2
       displayName: 'Publish net6 Binaries'
@@ -85,6 +85,7 @@ jobs:
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
+      condition: always()
       inputs:
         artifactName: maui
 
