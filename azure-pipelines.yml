@@ -101,7 +101,7 @@ jobs:
       displayName: GitVersion
 
     - script: |
-        dotnet publish -f:net6.0-android -c:Release src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj
+        dotnet publish -f:net6.0-android -c:Release src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj /bl:$(build.artifactstagingdirectory)/android-build.binlog
       displayName: Build Android Project
 
     - task: MSBuild@1
@@ -110,7 +110,7 @@ jobs:
       inputs:
         solution: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
         platform: x64
-        msbuildArguments: /ds /m /r /p:Configuration=Release
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/winappsdk-build.binlog
 
     - task: CopyFiles@2
       displayName: 'Publish net6 Binaries'
@@ -124,6 +124,7 @@ jobs:
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
+      condition: always()
       inputs:
         artifactName: net6-winui-mobile
 
