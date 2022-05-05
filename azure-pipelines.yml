@@ -117,7 +117,7 @@ jobs:
       displayName: 'Publish net6 Binaries'
       retryCountOnTaskFailure: 3
       inputs:
-        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.WinUI
         Contents: |
           **/Release/**/*-Signed.aab
           **/Release/**/*-Signed.apk
