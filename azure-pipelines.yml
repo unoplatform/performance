@@ -31,6 +31,10 @@ jobs:
           Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: WASM
+        WASM:
+          Project: src/dopes/Uno-dotnet6/DopeTestUno/DopeTestUno.Wasm/DopeTestUno.Wasm.csproj
+          ApplicationPlatform: AnyCPU
+          ArtifactName: Dopes-WASM
 
     steps:
     - script: |
@@ -67,7 +71,7 @@ jobs:
       displayName: GitVersion
 
     - task: MSBuild@1
-      displayName: Build project
+      displayName: Build benchmark project
       retryCountOnTaskFailure: 3
       inputs:
         solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
@@ -78,6 +82,24 @@ jobs:
       retryCountOnTaskFailure: 3
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+        Contents: |
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
+        TargetFolder: $(build.artifactstagingdirectory)
+
+    - task: MSBuild@1
+      displayName: Build dopes project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/dopes/DopeTestMaui/DopeTestMaui/DopeTestMaui.csproj
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/maui-dopes-build.binlog
+
+    - task: CopyFiles@2
+      displayName: 'Publish net6 Binaries'
+      retryCountOnTaskFailure: 3
+      inputs:
+        SourceFolder: $(build.sourcesdirectory)/src/dopes/DopeTestMaui/DopeTestMaui
         Contents: |
           **/Release/**/*-Signed.aab
           **/Release/**/*-Signed.apk
