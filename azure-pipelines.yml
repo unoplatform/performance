@@ -31,7 +31,7 @@ jobs:
           Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: WASM
-        WASM:
+        Dopes_Wasm:
           Project: src/dopes/Uno-dotnet6/DopeTestUno/DopeTestUno.Wasm/DopeTestUno.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: Dopes-WASM
