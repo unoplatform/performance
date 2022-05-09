@@ -31,10 +31,10 @@ jobs:
           Project: src/Benchmarks/Benchmarks.Wasm/Benchmarks.Wasm.csproj
           ApplicationPlatform: AnyCPU
           ArtifactName: WASM
-        WinUI_WinAppSDK:
-          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
-          ApplicationPlatform: x64
-          ArtifactName: net6-winui
+        Dopes_Wasm:
+          Project: src/dopes/Uno-dotnet6/DopeTestUno/DopeTestUno.Wasm/DopeTestUno.Wasm.csproj
+          ApplicationPlatform: AnyCPU
+          ArtifactName: Dopes-WASM
 
     steps:
     - script: |
@@ -50,15 +50,6 @@ jobs:
         platform: $(ApplicationPlatform)
         msbuildArguments: /ds /m /r /p:Configuration=Release
 
-    - task: CopyFiles@2
-      displayName: 'Publish WinAppSDK Binaries'
-      retryCountOnTaskFailure: 3
-      inputs:
-        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.WinUI/Benchmarks.WinUI.Windows
-        Contents: |
-          **/*.msix
-        TargetFolder: $(build.artifactstagingdirectory)
-
     - task: PublishBuildArtifacts@1
       inputs:
         artifactName: $(ArtifactName)
@@ -66,11 +57,6 @@ jobs:
   - job: Windows_Maui
     pool:
       vmImage: windows-2022
-
-    strategy:
-      matrix:
-        Main:
-          Project: 
 
     steps:
     - template: build/ci/templates/dotnet6-install-windows.yml
@@ -85,11 +71,11 @@ jobs:
       displayName: GitVersion
 
     - task: MSBuild@1
-      displayName: Build project
+      displayName: Build benchmark project
       retryCountOnTaskFailure: 3
       inputs:
         solution: src/Benchmarks.Maui/Benchmarks.Maui.csproj
-        msbuildArguments: /ds /m /r /p:Configuration=Release
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/maui-build.binlog
 
     - task: CopyFiles@2
       displayName: 'Publish net6 Binaries'
@@ -97,23 +83,37 @@ jobs:
       inputs:
         SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
         Contents: |
-          **/*.aab
-          **/*.apk
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
+        TargetFolder: $(build.artifactstagingdirectory)
+
+    - task: MSBuild@1
+      displayName: Build dopes project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/dopes/DopeTestMaui/DopeTestMaui/DopeTestMaui.csproj
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/maui-dopes-build.binlog
+
+    - task: CopyFiles@2
+      displayName: 'Publish net6 Binaries'
+      retryCountOnTaskFailure: 3
+      inputs:
+        SourceFolder: $(build.sourcesdirectory)/src/dopes/DopeTestMaui/DopeTestMaui
+        Contents: |
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
+      condition: always()
       inputs:
-        artifactName: $(ArtifactName)
+        artifactName: maui
 
   - job: Windows_WinUI_Dotnet
     pool:
       vmImage: windows-2022
-
-    strategy:
-      matrix:
-        Mobile:
-          Project: src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj
-          ArtifactName: net6-winui-mobile
 
     steps:
     - template: build/ci/templates/dotnet6-install-windows.yml
@@ -124,22 +124,32 @@ jobs:
       displayName: GitVersion
 
     - script: |
-        dotnet build -c Release $(Project)
-      displayName: Build
+        dotnet publish -f:net6.0-android -c:Release src/Benchmarks.WinUI/Benchmarks.WinUI.Mobile/Benchmarks.WinUI.Mobile.csproj /bl:$(build.artifactstagingdirectory)/android-build.binlog
+      displayName: Build Android Project
+
+    - task: MSBuild@1
+      displayName: Build WinAppSDK project
+      retryCountOnTaskFailure: 3
+      inputs:
+        solution: src/Benchmarks.WinUI/Benchmarks.WinUI.Windows/Benchmarks.WinUI.Windows.csproj
+        platform: x64
+        msbuildArguments: /ds /m /r /p:Configuration=Release /bl:$(build.artifactstagingdirectory)/winappsdk-build.binlog
 
     - task: CopyFiles@2
       displayName: 'Publish net6 Binaries'
       retryCountOnTaskFailure: 3
       inputs:
-        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.Maui
+        SourceFolder: $(build.sourcesdirectory)/src/Benchmarks.WinUI
         Contents: |
-          **/*.aab
-          **/*.apk
+          **/Release/**/*-Signed.aab
+          **/Release/**/*-Signed.apk
+          **/publish/**
         TargetFolder: $(build.artifactstagingdirectory)
 
     - task: PublishBuildArtifacts@1
+      condition: always()
       inputs:
-        artifactName: $(ArtifactName)
+        artifactName: net6-winui-mobile
 
   - job: macOS
     pool:

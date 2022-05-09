@@ -1,0 +1,15 @@
+﻿@using System.Diagnostics
+@inherits LayoutComponentBase
+
+<div class="main" id="root">
+    @foreach (var label in _labels)
+    {
+        @((MarkupString)label)
+    }
+    <span id="dopes" hidden="@(string.IsNullOrEmpty(_dopes))">@_dopes</span>
+    <div id="controls">
+        <button id="stop" @onclick="StartBuildClicked">Stop</button>
+        <button id="build" class="start" @onclick="StartBuildClicked">Build</button>
+        <button id="change" class="start" @onclick="StartChangeClicked">Change</button>
+    </div>
+</div>
