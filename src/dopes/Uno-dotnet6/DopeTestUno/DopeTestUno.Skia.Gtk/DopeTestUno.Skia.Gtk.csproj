@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <UpToDateCheckInput Include="..\DopeTestUno.Shared\**\*.xaml" />
-  </ItemGroup>
+  </ItemGroup>are
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.24.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.11.0" />
