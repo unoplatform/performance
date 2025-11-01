@@ -187,8 +187,11 @@ jobs:
         uses: maui-actions/apple-provisioning@580508948750a77c6abf662efe48fe8c95390e66
         with:
           certificate: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
-          certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
-          provisioning-profile: ${{ secrets.SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64 }}
+          certificate-passphrase: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
+          bundle-identifiers: 'uno.platform.performance'
+          app-store-connect-key-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
+          app-store-connect-issuer-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
+          app-store-connect-private-key: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
