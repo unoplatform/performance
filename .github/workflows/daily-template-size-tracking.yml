@@ -40,6 +40,9 @@ env:
   ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
   FAILURE_THRESHOLD: '20'
   APPLE_CERTIFICATE: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
+  APP_STORE_CONNECT_KEY_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
+  APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
+  APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
 
 jobs:
   prepare-matrix:
@@ -187,12 +190,10 @@ jobs:
         if: matrix.platform == 'ios'
         uses: maui-actions/apple-provisioning@580508948750a77c6abf662efe48fe8c95390e66
         with:
-          certificate: 'APPLE_CERTIFICATE'
+          certificate: APPLE_CERTIFICATE
           certificate-passphrase: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
           bundle-identifiers: 'uno.platform.performance'
-          app-store-connect-key-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
-          app-store-connect-issuer-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
-          app-store-connect-private-key: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
+          profile-types: 'IOS_APP_STORE'
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
