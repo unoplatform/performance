@@ -4,6 +4,12 @@ on:
   schedule:
     # Daily at midnight ET (5 AM UTC)
     - cron: '0 5 * * *'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/daily-template-size-tracking.yml'
+      - '.github/scripts/template-size-tracking/**'
   workflow_dispatch:
     inputs:
       uno_template_version:
@@ -278,7 +284,7 @@ jobs:
       - name: Measure Package Size
         shell: pwsh
         run: |
-          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/measure-package-size.ps1"
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/measure-package-size.ps1"
           & $scriptPath `
             -PublishPath "publish" `
             -Platform "${{ matrix.platform }}" `
@@ -330,7 +336,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
-          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/upload-to-azure.ps1"
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/upload-to-azure.ps1"
           & $scriptPath -MetricsPath "metrics"
 
       - name: Download Previous Results
@@ -368,7 +374,7 @@ jobs:
         id: compare
         shell: pwsh
         run: |
-          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/compare-and-alert.ps1"
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/compare-and-alert.ps1"
           & $scriptPath `
             -CurrentMetricsPath "metrics" `
             -PreviousMetricsPath "previous-metrics" `
@@ -378,7 +384,7 @@ jobs:
       - name: Generate Summary
         shell: pwsh
         run: |
-          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/generate-summary.ps1"
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/generate-summary.ps1"
           & $scriptPath -MetricsPath "metrics" -ComparisonPath "comparison.json"
 
       - name: Create Issue on Alert
