@@ -208,8 +208,16 @@ jobs:
           $platform = "${{ matrix.platform }}"
           $projectName = "UnoApp_$($template)_$($platform)"
           
-          Write-Host "Creating project with preset: $template"
-          dotnet new unoapp -o $projectName -preset $template
+          # Map platform to Uno template platform name
+          $unoPlatform = switch ($platform) {
+            "android" { "android" }
+            "ios" { "ios" }
+            "wasm" { "wasm" }
+            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos" } { "desktop" }
+          }
+          
+          Write-Host "Creating project with preset: $template, platform: $unoPlatform"
+          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform
           
           echo "PROJECT_PATH=$projectName" >> $env:GITHUB_ENV
           echo "PROJECT_NAME=$projectName" >> $env:GITHUB_ENV
