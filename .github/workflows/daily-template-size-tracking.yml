@@ -182,6 +182,14 @@ jobs:
         with:
           xcode-version: '26.0'
 
+      - name: Setup Apple Provisioning
+        if: matrix.platform == 'ios'
+        uses: maui-actions/apple-provisioning@v1
+        with:
+          certificate: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
+          certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
+          provisioning-profile: ${{ secrets.SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64 }}
+
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
         uses: actions/setup-java@v4
@@ -280,6 +288,7 @@ jobs:
                 -p:ArchiveOnBuild=true `
                 -p:CodesignKey="Apple Development" `
                 -p:CodesignProvision="Automatic" `
+                -p:ApplicationId=uno.platform.performance `
                 -o publish
             }
             "wasm" {
