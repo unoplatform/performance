@@ -39,9 +39,6 @@ concurrency:
 env:
   ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
   FAILURE_THRESHOLD: '20'
-  APP_STORE_CONNECT_KEY_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
-  APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
-  APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
 
 jobs:
   prepare-matrix:

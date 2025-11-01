@@ -30,9 +30,6 @@ Add the following GitHub repository secrets to enable all workflow features:
 | `UNO_APPLE_PROD_CERT_BASE64`            | Base64-encoded iOS distribution P12 certificate |
 | `UNO_APPLE_PROD_CERT_PASSWORD`         | Password for the P12 certificate |
 | `SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64` | Base64-encoded `.mobileprovision` profile used for signing |
-| `UNO_APPLE_PROD_CONNECT_KEY_ID`        | (Optional) App Store Connect key id (reserved for future use) |
-| `UNO_APPLE_PROD_CONNECT_ISSUER_ID`     | (Optional) App Store Connect issuer id |
-| `UNO_APPLE_PROD_CONNECT_PRIVATE_KEY`   | (Optional) App Store Connect private key |
 
 ### iOS Signing
 
@@ -90,6 +87,5 @@ To add new platforms once Uno templates support them, extend the matrix generati
 
 ### Future Improvements
 
-- Use App Store Connect API for automatic profile validation.
 - Automate trend chart generation and publish to repository pages.
 - Add Android `ApplicationId` alignment if needed for distribution parity.
