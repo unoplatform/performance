@@ -39,6 +39,7 @@ concurrency:
 env:
   ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
   FAILURE_THRESHOLD: '20'
+  APPLE_CERTIFICATE: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
 
 jobs:
   prepare-matrix:
@@ -192,8 +193,6 @@ jobs:
           app-store-connect-key-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
           app-store-connect-issuer-id: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
           app-store-connect-private-key: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
