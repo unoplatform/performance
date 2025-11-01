@@ -184,7 +184,7 @@ jobs:
 
       - name: Setup Apple Provisioning
         if: matrix.platform == 'ios'
-        uses: maui-actions/apple-provisioning@5805089
+        uses: maui-actions/apple-provisioning@580508948750a77c6abf662efe48fe8c95390e66
         with:
           certificate: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
           certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
