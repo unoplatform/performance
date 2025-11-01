@@ -32,6 +32,10 @@ on:
         default: '10'
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
   FAILURE_THRESHOLD: '20'
@@ -206,7 +210,10 @@ jobs:
         run: |
           $template = "${{ matrix.template }}"
           $platform = "${{ matrix.platform }}"
-          $projectName = "UnoApp_$($template)_$($platform)"
+          
+          # Create safe project name (replace hyphens with underscores)
+          $safePlatform = $platform -replace '-', '_'
+          $projectName = "UnoApp_$($template)_$($safePlatform)"
           
           # Map platform to Uno template platform name
           $unoPlatform = switch ($platform) {
