@@ -7,8 +7,8 @@ namespace Benchmarks
 {
     public sealed partial class MainPage : Page
     {
-        private UserControl _benchmarkDotNetControl = new BenchmarkDotNetControl();
-        private UserControl _asyncUIBenchmarkControl = new AsyncUIBenchmarkControl();
+        private UserControl _benchmarkDotNetControl;// = new BenchmarkDotNetControl();
+        private UserControl _asyncUIBenchmarkControl;// = new AsyncUIBenchmarkControl();
 
         public MainPage()
         {

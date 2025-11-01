@@ -8,6 +8,8 @@ namespace Benchmarks.Skia.Gtk
 	{
 		static void Main(string[] args)
 		{
+			App.InitializeLogging();
+
 			ExceptionManager.UnhandledException += delegate (UnhandledExceptionArgs expArgs)
 			{
 				Console.WriteLine("GLIB UNHANDLED EXCEPTION" + expArgs.ExceptionObject.ToString());
