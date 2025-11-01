@@ -186,7 +186,7 @@ Significant size increases detected in Uno Platform templates.
 ## Details
 
 - **Workflow Run**: [View Details]($($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:GITHUB_RUN_ID))
-- **Azure Storage**: [View Metrics](https://$storageAccount.blob.core.windows.net/template-size-tracking/$year/$dateTime/)
+- **Azure Storage**: [View Metrics](https://${storageAccount}.blob.core.windows.net/template-size-tracking/$year/$dateTime/)
 - **Alert Threshold**: $AlertThreshold%
 - **Failure Threshold**: $FailureThreshold%
 

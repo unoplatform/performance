@@ -183,7 +183,7 @@ $summary += @"
 
 ## Links
 
-- 📦 [Azure Storage Metrics](https://$storageAccount.blob.core.windows.net/template-size-tracking/$year/$dateTime/)
+- 📦 [Azure Storage Metrics](https://${storageAccount}.blob.core.windows.net/template-size-tracking/$year/$dateTime/)
 - 🔗 [Workflow Run]($($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:GITHUB_RUN_ID))
 - 📚 [Repository]($($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY))
 

@@ -88,4 +88,4 @@ foreach ($file in $metricsFiles) {
 
 Write-Host "`n=== Upload Complete ===" -ForegroundColor Green
 Write-Host "Total files uploaded: $($metricsFiles.Count)"
-Write-Host "Azure Storage URL: https://$storageAccount.blob.core.windows.net/$containerName/$year/$dateTimePath/"
+Write-Host "Azure Storage URL: https://${storageAccount}.blob.core.windows.net/$containerName/$year/$dateTimePath/"

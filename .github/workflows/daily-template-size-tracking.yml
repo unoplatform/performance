@@ -226,7 +226,7 @@ jobs:
           $startTime = Get-Date
           
           # Debug: Show what's in the project directory
-          Write-Host "Contents of $projectPath:"
+          Write-Host "Contents of ${projectPath}:"
           Get-ChildItem -Path $projectPath -Recurse | Select-Object FullName | Format-Table -AutoSize
           
           # Single project structure - find the main .csproj
