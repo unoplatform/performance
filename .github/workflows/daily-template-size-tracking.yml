@@ -210,6 +210,7 @@ jobs:
         run: |
           $template = "${{ matrix.template }}"
           $platform = "${{ matrix.platform }}"
+          $dotnetVersion = "${{ matrix.dotnet }}"
           
           # Create safe project name (replace hyphens with underscores)
           $safePlatform = $platform -replace '-', '_'
@@ -223,8 +224,8 @@ jobs:
             { $_ -in "desktop-windows", "desktop-linux", "desktop-macos" } { "desktop" }
           }
           
-          Write-Host "Creating project with preset: $template, platform: $unoPlatform"
-          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform
+          Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: net$dotnetVersion"
+          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform -tfm net$dotnetVersion
           
           echo "PROJECT_PATH=$projectName" >> $env:GITHUB_ENV
           echo "PROJECT_NAME=$projectName" >> $env:GITHUB_ENV
