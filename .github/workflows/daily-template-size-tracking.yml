@@ -39,7 +39,6 @@ concurrency:
 env:
   ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
   FAILURE_THRESHOLD: '20'
-  APPLE_CERTIFICATE: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
   APP_STORE_CONNECT_KEY_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_KEY_ID }}
   APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.UNO_APPLE_PROD_CONNECT_ISSUER_ID }}
   APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.UNO_APPLE_PROD_CONNECT_PRIVATE_KEY }}
@@ -188,12 +187,12 @@ jobs:
 
       - name: Setup Apple Provisioning
         if: matrix.platform == 'ios'
-        uses: maui-actions/apple-provisioning@580508948750a77c6abf662efe48fe8c95390e66
+        uses: ./.github/actions/manual-ios-signing
         with:
-          certificate: APPLE_CERTIFICATE
-          certificate-passphrase: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
-          bundle-identifiers: 'uno.platform.performance'
-          profile-types: 'IOS_APP_STORE'
+          certificate-base64: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
+          certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64 }}
+          codesign-key: Apple Development
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
@@ -291,8 +290,8 @@ jobs:
                 -c Release `
                 -p:RuntimeIdentifier=$rid `
                 -p:ArchiveOnBuild=true `
-                -p:CodesignKey="Apple Development" `
-                -p:CodesignProvision="Automatic" `
+                -p:CodesignKey="$env:CODESIGN_KEY" `
+                -p:CodesignProvision="$env:PROVISIONING_UUID" `
                 -p:ApplicationId=uno.platform.performance `
                 -o publish
             }

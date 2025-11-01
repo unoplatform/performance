@@ -1,0 +1,69 @@
+name: Manual iOS Signing
+description: Sets up keychain, imports certificate and provisioning profile, exports PROVISIONING_UUID and CODESIGN_KEY.
+author: unoplatform
+
+inputs:
+  certificate-base64:
+    description: Base64 encoded P12 certificate
+    required: true
+  certificate-password:
+    description: Password for the P12 certificate
+    required: true
+  provisioning-profile-base64:
+    description: Base64 encoded iOS provisioning profile (.mobileprovision)
+    required: true
+  codesign-key:
+    description: Codesign identity to use (e.g. Apple Development)
+    required: false
+    default: Apple Development
+
+outputs:
+  provisioning-uuid:
+    description: Extracted UUID of the imported provisioning profile
+    value: ${{ steps.signing.outputs.provisioning-uuid }}
+
+runs:
+  using: composite
+  steps:
+    - name: Decode certificate and provisioning profile
+      id: signing
+      shell: bash
+      run: |
+        set -euo pipefail
+        certInput='${{ inputs.certificate-base64 }}'
+        passInput='${{ inputs.certificate-password }}'
+        provInput='${{ inputs.provisioning-profile-base64 }}'
+        keyInput='${{ inputs.codesign-key }}'
+
+        if [ -z "$certInput" ] || [ -z "$passInput" ] || [ -z "$provInput" ]; then
+          echo "Missing required inputs" >&2
+          exit 1
+        fi
+
+        certPath="$RUNNER_TEMP/ios_cert.p12"
+        provPath="$RUNNER_TEMP/ios_profile.mobileprovision"
+        echo "$certInput" | base64 --decode > "$certPath"
+        echo "$provInput" | base64 --decode > "$provPath"
+
+        security create-keychain -p temp ios-signing.keychain
+        security import "$certPath" -k ios-signing.keychain -P "$passInput" -T /usr/bin/codesign
+        security list-keychains -s ios-signing.keychain
+        security unlock-keychain -p temp ios-signing.keychain
+        security set-keychain-settings -t 3600 -l ~/Library/Keychains/ios-signing.keychain
+        security set-key-partition-list -S apple-tool:,apple: -s -k temp ios-signing.keychain
+
+        provPlist="$RUNNER_TEMP/profile.plist"
+        security cms -D -i "$provPath" > "$provPlist"
+        uuid=$( /usr/libexec/PlistBuddy -c 'Print :UUID' "$provPlist" )
+        echo "Provisioning Profile UUID: $uuid"
+        echo "PROVISIONING_UUID=$uuid" >> "$GITHUB_ENV"
+        echo "CODESIGN_KEY=$keyInput" >> "$GITHUB_ENV"
+        echo "provisioning-uuid=$uuid" >> "$GITHUB_OUTPUT"
+
+        mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+        cp "$provPath" "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+
+    - name: Output summary
+      shell: bash
+      run: |
+        echo "Manual iOS signing configured. UUID=$PROVISIONING_UUID" >> "$GITHUB_STEP_SUMMARY"
