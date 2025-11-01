@@ -372,8 +372,8 @@ jobs:
       - name: Upload to Azure Storage
         shell: pwsh
         env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_KEY: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/upload-to-azure.ps1"
           & $scriptPath -MetricsPath "metrics"
@@ -381,8 +381,8 @@ jobs:
       - name: Download Previous Results
         shell: pwsh
         env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+          AZURE_STORAGE_KEY: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
           # Download previous day's results for comparison
           $yesterday = (Get-Date).AddDays(-1)
