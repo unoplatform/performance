@@ -192,7 +192,7 @@ jobs:
           certificate-base64: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
           certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
           provisioning-profile-base64: ${{ secrets.SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64 }}
-          codesign-key: Apple Development
+          codesign-key: iPhone Distribution
 
       - name: Setup Java (for Android)
         if: matrix.platform == 'android'
