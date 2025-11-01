@@ -225,8 +225,12 @@ jobs:
           # Start timing
           $startTime = Get-Date
           
+          # Debug: Show what's in the project directory
+          Write-Host "Contents of $projectPath:"
+          Get-ChildItem -Path $projectPath -Recurse | Select-Object FullName | Format-Table -AutoSize
+          
           # Single project structure - find the main .csproj
-          $projectFile = Get-ChildItem -Path $projectPath -Filter "*.csproj" -Exclude "*.Tests.csproj" | Select-Object -First 1
+          $projectFile = Get-ChildItem -Path $projectPath -Filter "*.csproj" -Exclude "*.Tests.csproj" -Recurse | Select-Object -First 1
           
           if (-not $projectFile) {
             Write-Error "Could not find project file in $projectPath"
