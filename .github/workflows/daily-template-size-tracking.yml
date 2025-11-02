@@ -288,6 +288,10 @@ jobs:
           $platform = "${{ matrix.platform }}"
           $framework = "${{ matrix.framework }}"
           $rid = "${{ matrix.rid }}"
+          $dotnetVersion = "${{ matrix.dotnet }}"
+          
+          # Disable XAML/Resource Trimming for net10 due to https://github.com/unoplatform/uno/issues/21731
+          $enableXamlTrimming = $dotnetVersion -ne "10.0"
           
           # Start timing
           $startTime = Get-Date
@@ -305,6 +309,7 @@ jobs:
           }
           
           Write-Host "Found project: $($projectFile.FullName)"
+          Write-Host "XAML/Resource Trimming enabled: $enableXamlTrimming"
           
           switch ($platform) {
             "android" {
@@ -314,7 +319,8 @@ jobs:
                 -c Release `
                 -p:AndroidPackageFormat=aab `
                 -p:AndroidKeyStore=false `
-                -o publish
+                -o publish `
+                /bl:build.binlog
             }
             "ios" {
               Write-Host "Building iOS IPA (signed device build)..."
@@ -326,14 +332,18 @@ jobs:
                 -p:CodesignKey="$env:CODESIGN_KEY" `
                 -p:CodesignProvision="$env:PROVISIONING_UUID" `
                 -p:ApplicationId=uno.platform.performance `
-                -o publish
+                -o publish `
+                /bl:build.binlog
             }
             "wasm" {
               Write-Host "Building WebAssembly..."
               dotnet publish $projectFile.FullName `
                 -f $framework `
                 -c Release `
-                -o publish
+                -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
+                -p:UnoEnableXamlTrimming=$enableXamlTrimming `
+                -o publish `
+                /bl:build.binlog
             }
             { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
               $osName = $platform -replace "desktop-", "" -replace "-aot", ""
@@ -347,7 +357,9 @@ jobs:
                   -r $rid `
                   --self-contained true `
                   -p:PublishAot=true `
-                  -o publish
+                  -p:PublishTrimmed=true `
+                  -o publish `
+                  /bl:build.binlog
               } else {
                 Write-Host "Building $osName Desktop (self-contained)..."
                 dotnet publish $projectFile.FullName `
@@ -355,7 +367,11 @@ jobs:
                   -c Release `
                   -r $rid `
                   --self-contained true `
-                  -o publish
+                  -p:PublishTrimmed=true `
+                  -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
+                  -p:UnoEnableXamlTrimming=$enableXamlTrimming `
+                  -o publish `
+                  /bl:build.binlog
               }
             }
           }
@@ -365,6 +381,14 @@ jobs:
           
           Write-Host "Build completed in $buildTime seconds"
           echo "BUILD_TIME=$buildTime" >> $env:GITHUB_ENV
+
+      - name: Upload Build Binlog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: binlog-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          path: build.binlog
+          retention-days: 14
 
       - name: Measure Package Size
         shell: pwsh
