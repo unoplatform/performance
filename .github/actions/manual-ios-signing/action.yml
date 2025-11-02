@@ -62,8 +62,3 @@ runs:
 
         mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
         cp "$provPath" "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
-
-    - name: Output summary
-      shell: bash
-      run: |
-        echo "Manual iOS signing configured. UUID=$PROVISIONING_UUID" >> "$GITHUB_STEP_SUMMARY"
