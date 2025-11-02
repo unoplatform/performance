@@ -83,7 +83,11 @@ foreach ($dotnetGroup in $groupedByDotNet) {
         
         $sizeMB = [math]::Round($metric.packageSize / 1MB, 2)
         $compressedMB = [math]::Round($metric.compressedSize / 1MB, 2)
-        $buildTime = "$([math]::Round($metric.buildTimeSeconds / 60, 1))m"
+        if ($metric.PSObject.Properties["buildTimeFormatted"] -and $metric.buildTimeFormatted) {
+            $buildTime = $metric.buildTimeFormatted
+        } else {
+            $buildTime = "$([math]::Round($metric.buildTimeSeconds / 60, 1))m"
+        }
         
         $changeIndicator = ""
         if ($comparison -and $comparison.status -ne "new") {
