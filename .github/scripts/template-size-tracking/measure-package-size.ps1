@@ -160,50 +160,43 @@ switch ($Platform) {
     
     "wasm" {
         Write-Host "Measuring WebAssembly wwwroot..." -ForegroundColor Yellow
-        
-        $wwwrootPath = Get-ChildItem -Path $PublishPath -Filter "wwwroot" -Recurse -Directory | 
-            Select-Object -First 1
-        
+        $wwwrootPath = Get-ChildItem -Path $PublishPath -Filter "wwwroot" -Recurse -Directory | Select-Object -First 1
         if ($wwwrootPath) {
             $metrics.packageSize = Get-DirectorySize -Path $wwwrootPath.FullName
             $metrics.packagePath = "wwwroot"
             Write-Host "wwwroot Size: $($metrics.packageSize / 1MB) MB"
-            
             # WASM-specific metrics
-            $metrics.wasmFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.wasm" -Recurse | 
-                Measure-Object -Property Length -Sum).Sum
-            $metrics.jsFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.js" -Recurse | 
-                Measure-Object -Property Length -Sum).Sum
-            $metrics.dllFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.dll" -Recurse | 
-                Measure-Object -Property Length -Sum).Sum
+            $metrics.wasmFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.wasm" -Recurse | Measure-Object -Property Length -Sum).Sum
+            $metrics.jsFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.js" -Recurse | Measure-Object -Property Length -Sum).Sum
+            $metrics.dllFileSize = (Get-ChildItem -Path $wwwrootPath.FullName -Filter "*.dll" -Recurse | Measure-Object -Property Length -Sum).Sum
+            # Count .wasm files in _framework as assemblies
+            $frameworkPath = Join-Path $wwwrootPath.FullName "_framework"
+            if (Test-Path $frameworkPath) {
+                $metrics.assemblyCount = (Get-ChildItem -Path $frameworkPath -Filter "*.wasm" -Recurse -File | Measure-Object).Count
+            } else {
+                $metrics.assemblyCount = 0
+            }
         } else {
             $metrics.packageSize = Get-DirectorySize -Path $PublishPath
+            $metrics.assemblyCount = 0
         }
-        
         $metrics.totalPublishSize = Get-DirectorySize -Path $PublishPath
         $metrics.fileCount = Get-FileCount -Path $PublishPath
-        $metrics.assemblyCount = Get-FileCount -Path $PublishPath -Filter "*.dll"
     }
     
     { $_ -in "windows", "desktop", "macos" } {
         Write-Host "Measuring Desktop publish folder..." -ForegroundColor Yellow
-        
         $metrics.packageSize = Get-DirectorySize -Path $PublishPath
         $metrics.packagePath = "publish"
         Write-Host "Publish Folder Size: $($metrics.packageSize / 1MB) MB"
-        
         # Desktop-specific metrics
         $metrics.totalPublishSize = $metrics.packageSize
         $metrics.fileCount = Get-FileCount -Path $PublishPath
-        $metrics.assemblyCount = Get-FileCount -Path $PublishPath -Filter "*.dll"
-        
+        # Count all files except directories
+        $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Recurse -File | Measure-Object).Count
         # Find main executable
         $exePattern = if ($Platform -eq "windows") { "*.exe" } else { "*" }
-        $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | 
-            Where-Object { $_.Length -gt 1MB } | 
-            Sort-Object Length -Descending | 
-            Select-Object -First 1
-        
+        $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
         if ($mainExe) {
             $metrics.mainExecutableSize = $mainExe.Length
             $metrics.mainExecutableName = $mainExe.Name
@@ -221,12 +214,9 @@ if ($largestFile) {
     $metrics.largestFile = $largestFile
 }
 
-# Create compressed archive for comparison
+# Create compressed archive for comparison (always use zip for desktop, otherwise as before)
 $tempZip = Join-Path ([System.IO.Path]::GetTempPath()) "package.zip"
-if (Test-Path $tempZip) {
-    Remove-Item $tempZip -Force
-}
-
+if (Test-Path $tempZip) { Remove-Item $tempZip -Force }
 Write-Host "Creating compressed archive for measurement..." -ForegroundColor Yellow
 try {
     Compress-Archive -Path "$PublishPath\*" -DestinationPath $tempZip -CompressionLevel Optimal -Force
@@ -257,7 +247,10 @@ Write-Host "Package Size: $([math]::Round($metrics.packageSize / 1MB, 2)) MB"
 Write-Host "Compressed Size: $([math]::Round($metrics.compressedSize / 1MB, 2)) MB"
 Write-Host "File Count: $($metrics.fileCount)"
 Write-Host "Assembly Count: $($metrics.assemblyCount)"
-Write-Host "Build Time: $($metrics.buildTimeSeconds) seconds"
+# Format build time as C# timespan (HH.MM:SS)
+$ts = [System.TimeSpan]::FromSeconds($metrics.buildTimeSeconds)
+$metrics.buildTimeFormatted = $ts.ToString("hh\:mm\:ss")
+Write-Host "Build Time: $($metrics.buildTimeFormatted)"
 
 # Save metrics to JSON
 $metricsJson = $metrics | ConvertTo-Json -Depth 10
