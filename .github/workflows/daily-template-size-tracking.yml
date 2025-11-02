@@ -314,7 +314,8 @@ jobs:
                 -c Release `
                 -p:AndroidPackageFormat=aab `
                 -p:AndroidKeyStore=false `
-                -o publish
+                -o publish `
+                /bl:build.binlog
             }
             "ios" {
               Write-Host "Building iOS IPA (signed device build)..."
@@ -326,7 +327,8 @@ jobs:
                 -p:CodesignKey="$env:CODESIGN_KEY" `
                 -p:CodesignProvision="$env:PROVISIONING_UUID" `
                 -p:ApplicationId=uno.platform.performance `
-                -o publish
+                -o publish `
+                /bl:build.binlog
             }
             "wasm" {
               Write-Host "Building WebAssembly..."
@@ -335,7 +337,8 @@ jobs:
                 -c Release `
                 -p:UnoXamlResourcesTrimming=true `
                 -p:UnoEnableXamlTrimming=true `
-                -o publish
+                -o publish `
+                /bl:build.binlog
             }
             { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
               $osName = $platform -replace "desktop-", "" -replace "-aot", ""
@@ -350,7 +353,8 @@ jobs:
                   --self-contained true `
                   -p:PublishAot=true `
                   -p:PublishTrimmed=true `
-                  -o publish
+                  -o publish `
+                  /bl:build.binlog
               } else {
                 Write-Host "Building $osName Desktop (self-contained)..."
                 dotnet publish $projectFile.FullName `
@@ -361,7 +365,8 @@ jobs:
                   -p:PublishTrimmed=true `
                   -p:UnoXamlResourcesTrimming=true `
                   -p:UnoEnableXamlTrimming=true `
-                  -o publish
+                  -o publish `
+                  /bl:build.binlog
               }
             }
           }
@@ -371,6 +376,14 @@ jobs:
           
           Write-Host "Build completed in $buildTime seconds"
           echo "BUILD_TIME=$buildTime" >> $env:GITHUB_ENV
+
+      - name: Upload Build Binlog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: binlog-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          path: build.binlog
+          retention-days: 14
 
       - name: Measure Package Size
         shell: pwsh
