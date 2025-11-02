@@ -229,18 +229,23 @@ if ($largestFile) {
     $metrics.largestFile = $largestFile
 }
 
-# Create compressed archive for comparison (always use zip for desktop, otherwise as before)
-$tempZip = Join-Path ([System.IO.Path]::GetTempPath()) "package.zip"
-if (Test-Path $tempZip) { Remove-Item $tempZip -Force }
-Write-Host "Creating compressed archive for measurement..." -ForegroundColor Yellow
-try {
-    Compress-Archive -Path "$PublishPath\*" -DestinationPath $tempZip -CompressionLevel Optimal -Force
-    $metrics.compressedSize = (Get-Item $tempZip).Length
-    Write-Host "Compressed Size: $($metrics.compressedSize / 1MB) MB"
-    Remove-Item $tempZip -Force
-} catch {
-    Write-Warning "Could not create compressed archive: $_"
-    $metrics.compressedSize = 0
+# Set compressed size appropriately for each platform
+if ($Platform -eq "android" -or $Platform -eq "ios") {
+    $metrics.compressedSize = $metrics.packageSize
+    Write-Host "Compressed Size (same as package): $([math]::Round($metrics.compressedSize / 1MB, 2)) MB"
+} else {
+    $tempZip = Join-Path ([System.IO.Path]::GetTempPath()) "package.zip"
+    if (Test-Path $tempZip) { Remove-Item $tempZip -Force }
+    Write-Host "Creating compressed archive for measurement..." -ForegroundColor Yellow
+    try {
+        Compress-Archive -Path "$PublishPath\*" -DestinationPath $tempZip -CompressionLevel Optimal -Force
+        $metrics.compressedSize = (Get-Item $tempZip).Length
+        Write-Host "Compressed Size: $([math]::Round($metrics.compressedSize / 1MB, 2)) MB"
+        Remove-Item $tempZip -Force
+    } catch {
+        Write-Warning "Could not create compressed archive: $_"
+        $metrics.compressedSize = 0
+    }
 }
 
 # Calculate compression ratio
