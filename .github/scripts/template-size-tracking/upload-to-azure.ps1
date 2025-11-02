@@ -17,10 +17,9 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== Uploading Metrics to Azure Storage ===" -ForegroundColor Cyan
 
 $storageAccount = $env:AZURE_STORAGE_ACCOUNT
-$storageKey = $env:AZURE_STORAGE_KEY
 
-if ([string]::IsNullOrEmpty($storageAccount) -or [string]::IsNullOrEmpty($storageKey)) {
-    Write-Error "Azure Storage credentials not found in environment variables"
+if ([string]::IsNullOrEmpty($storageAccount)) {
+    Write-Error "Azure Storage account name not found in environment variable AZURE_STORAGE_ACCOUNT"
     exit 1
 }
 
@@ -39,7 +38,7 @@ Write-Host "Ensuring container exists..." -ForegroundColor Yellow
 az storage container create `
     --name $containerName `
     --account-name $storageAccount `
-    --account-key $storageKey `
+    --auth-mode login `
     --output none 2>$null
 
 # Upload all metrics files
@@ -64,7 +63,7 @@ foreach ($file in $metricsFiles) {
     
     az storage blob upload `
         --account-name $storageAccount `
-        --account-key $storageKey `
+        --auth-mode login `
         --container-name $containerName `
         --name $blobPath `
         --file $file.FullName `
@@ -76,7 +75,7 @@ foreach ($file in $metricsFiles) {
     
     az storage blob upload `
         --account-name $storageAccount `
-        --account-key $storageKey `
+        --auth-mode login `
         --container-name $containerName `
         --name $latestPath `
         --file $file.FullName `

@@ -350,6 +350,9 @@ jobs:
     permissions:
       contents: read
       issues: write
+      id-token: write
+
+    environment: Development
     
     steps:
       - name: Checkout
@@ -361,45 +364,51 @@ jobs:
           pattern: metrics-*
           path: metrics
 
-      - name: Setup Azure CLI
-        uses: azure/cli@v2
-        with:
-          azcliversion: latest
+      # Azure CLI is available on ubuntu-latest runner; verify before use
+      - name: Verify Azure CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az --version
 
-      - name: Upload to Azure Storage
+      - name: Azure Login (OIDC Managed Identity)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SIZE_CHECK_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.SIZE_CHECK_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.SIZE_CHECK_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload to Azure Storage (OIDC)
         shell: pwsh
         env:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
-          AZURE_STORAGE_KEY: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
+          az --version | Write-Host
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/upload-to-azure.ps1"
           & $scriptPath -MetricsPath "metrics"
 
-      - name: Download Previous Results
+      - name: Download Previous Results (OIDC)
         shell: pwsh
         env:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
-          AZURE_STORAGE_KEY: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY }}
         run: |
-          # Download previous day's results for comparison
+          # Download previous day's results for comparison using identity auth
           $yesterday = (Get-Date).AddDays(-1)
           $year = $yesterday.ToString("yyyy")
           $searchPattern = $yesterday.ToString("MM-dd-")
-          
+
           Write-Host "Downloading previous results from year $year with pattern $searchPattern*"
-          
+
           New-Item -ItemType Directory -Force -Path "previous-metrics"
-          
-          # Try to download previous day's metrics
+
           try {
             az storage blob download-batch `
               --account-name $env:AZURE_STORAGE_ACCOUNT `
-              --account-key $env:AZURE_STORAGE_KEY `
+              --auth-mode login `
               --source "template-size-tracking" `
               --destination "previous-metrics" `
               --pattern "$year/$searchPattern*" `
               --output none
-            
             Write-Host "Successfully downloaded previous metrics"
           }
           catch {
@@ -444,3 +453,7 @@ jobs:
         run: |
           echo "::error::Critical size increase detected (>${{ env.FAILURE_THRESHOLD }}%)"
           exit 1
+
+      - name: Azure Logout
+        if: always()
+        run: az logout

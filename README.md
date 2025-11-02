@@ -3,6 +3,7 @@
 This repository contains standalone benchmarks for the [Uno Platform](https://github.com/unoplatform/uno), based on [Benchmark.NET](https://benchmarkdotnet.org/).
 
 ## Related
+
 - [Uno Platform .NET 5 support annoucement, with benchmarks](https://platform.uno/?p=3874).
 
 ## Daily Template Size Tracking Workflow
@@ -19,17 +20,19 @@ The repository includes an automated GitHub Actions workflow `daily-template-siz
 - Uploads metrics JSON files to Azure Blob Storage in a date & framework structured layout.
 - Compares current results vs previous day and issues alerts if size deltas exceed thresholds.
 
-### Secret Configuration
+### Secrets & Configuration
 
-Add the following GitHub repository secrets to enable all workflow features:
+The workflow uses federated identity (OIDC) for Azure Blob uploads. Configure these GitHub repository secrets:
 
-| Secret Name | Purpose |
-|-------------|---------|
-| `SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage Account name for metrics archival |
-| `SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY`  | Key for the above storage account |
-| `UNO_APPLE_PROD_CERT_BASE64`            | Base64-encoded iOS distribution P12 certificate |
-| `UNO_APPLE_PROD_CERT_PASSWORD`         | Password for the P12 certificate |
-| `SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64` | Base64-encoded `.mobileprovision` profile used for signing |
+| Name | Purpose |
+|------|---------|
+| `SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME` | Storage account name for metrics archival |
+| `SIZE_CHECK_AZURE_CLIENT_ID` | Client ID of Entra application or user-assigned managed identity |
+| `SIZE_CHECK_AZURE_TENANT_ID` | Tenant (directory) ID for the identity |
+| `SIZE_CHECK_AZURE_SUBSCRIPTION_ID` | Subscription ID hosting the storage account |
+| `UNO_APPLE_PROD_CERT_BASE64` | Base64-encoded iOS distribution P12 certificate |
+| `UNO_APPLE_PROD_CERT_PASSWORD` | Password for the P12 certificate |
+| `SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64` | Base64-encoded provisioning profile (.mobileprovision) |
 
 ### iOS Signing
 
@@ -47,45 +50,51 @@ For production distribution, the `codesign-key` input is set to `iPhone Distribu
 
 ### Metrics & Alerts
 
-Scripts used:
+Scripts:
 
-- `measure-package-size.ps1` — collects sizes, counts, build time.
-- `upload-to-azure.ps1` — uploads metrics to Azure blob storage using `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` environment variables (mapped from the new `SIZE_CHECK_*` secrets).
-- `compare-and-alert.ps1` — compares current vs previous day and emits alert / critical flags.
-- `generate-summary.ps1` — produces markdown summary output.
+| Script | Purpose |
+|--------|---------|
+| `measure-package-size.ps1` | Collects sizes, counts, build time |
+| `upload-to-azure.ps1` | Uploads metrics using identity (`--auth-mode login`) |
+| `compare-and-alert.ps1` | Compares current vs previous day; sets alert/critical flags |
+| `generate-summary.ps1` | Produces markdown summary output |
 
-Environment thresholds:
+Thresholds:
 
-- `ALERT_THRESHOLD` (default 10%) — triggers an informational issue.
-- `FAILURE_THRESHOLD` (fixed 20%) — fails the workflow for critical regressions.
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `ALERT_THRESHOLD` | 10% | Opens issue if exceeded |
+| `FAILURE_THRESHOLD` | 20% | Fails workflow if exceeded |
 
 ### Extending
 
-To add more .NET versions or templates, use the `workflow_dispatch` inputs:
+Dispatch inputs (example):
 
 ```text
 dotnet_versions: 9.0,10.0
 templates: blank,recommended
 ```
 
-To add new platforms once Uno templates support them, extend the matrix generation in the `Prepare Build Matrix` step.
+Add platforms by editing matrix generation in the workflow.
 
 ### Troubleshooting
 
 | Symptom | Cause | Resolution |
 |---------|-------|-----------|
-| iOS signing fails with provisioning UUID empty | Invalid or expired provisioning profile | Recreate profile, re-base64 encode, update secret |
-| Azure upload fails (Auth error) | Missing or incorrect storage account secrets | Verify `SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME` and `SIZE_CHECK_AZURE_STORAGE_ACCOUNT_KEY` |
-| No previous metrics downloaded | First run or prior day failed | Ignore if first run; ensure daily schedule succeeded |
-| Critical size increase failure | Large artifact growth beyond `FAILURE_THRESHOLD` | Inspect build artifacts; investigate dependency or template changes |
+| iOS signing fails (UUID empty) | Invalid / expired provisioning profile | Recreate, re-base64, update secret |
+| Azure upload fails (Auth) | Identity lacks role or wrong account name | Assign `Storage Blob Data Contributor`; verify storage name |
+| No previous metrics | First run or prior day failed | Ignore first run; check daily schedule logs |
+| Critical size increase failure | Large artifact growth | Inspect build artifacts; dependency changes |
 
 ### Security Notes
 
-- Keep certificate and provisioning profile secrets limited to required maintainers.
-- Rotate Azure Storage account keys periodically and update corresponding GitHub secrets.
-- Avoid echoing secret contents in workflow logs; current scripts only decode to files.
+- Federated identity removes need for long-lived storage keys; use least-privilege RBAC.
+- Limit access to certificate & provisioning secrets.
+- Secrets are never echoed; scripts decode only locally.
+- If a temporary rollback to key auth occurs, remove the key ASAP after returning to identity.
 
 ### Future Improvements
 
 - Automate trend chart generation and publish to repository pages.
-- Add Android `ApplicationId` alignment if needed for distribution parity.
+- Add Android `ApplicationId` alignment if needed.
+- Optional SAS generation for secure external sharing of metrics.
