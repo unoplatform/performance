@@ -1,0 +1,508 @@
+name: Daily Template Size Tracking
+
+on:
+  schedule:
+    # Daily at midnight ET (5 AM UTC)
+    - cron: '0 5 * * *'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/daily-template-size-tracking.yml'
+      - '.github/scripts/template-size-tracking/**'
+  workflow_dispatch:
+    inputs:
+      uno_template_version:
+        description: 'Specific Uno.Templates version (leave empty for latest prerelease)'
+        required: false
+        type: string
+      dotnet_versions:
+        description: 'Comma-separated .NET versions to test (e.g., 9.0,10.0)'
+        required: false
+        default: '9.0,10.0'
+        type: string
+      templates:
+        description: 'Comma-separated templates to test (blank,recommended)'
+        required: false
+        default: 'blank,recommended'
+        type: string
+      alert_threshold:
+        description: 'Alert threshold percentage for size increases'
+        required: false
+        default: '10'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ALERT_THRESHOLD: ${{ inputs.alert_threshold || '10' }}
+  FAILURE_THRESHOLD: '20'
+
+jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      uno-version: ${{ steps.install-templates.outputs.uno-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Uno Templates
+        id: install-templates
+        shell: pwsh
+        run: |
+          if ("${{ inputs.uno_template_version }}" -ne "") {
+            Write-Host "Installing Uno.Templates version ${{ inputs.uno_template_version }}"
+            dotnet new install Uno.Templates::${{ inputs.uno_template_version }}
+            echo "uno-version=${{ inputs.uno_template_version }}" >> $env:GITHUB_OUTPUT
+          }
+          else {
+            Write-Host "Fetching latest Uno.Templates version (including prerelease)..."
+            $response = Invoke-RestMethod -Uri "https://api.nuget.org/v3-flatcontainer/uno.templates/index.json"
+            $latestVersion = $response.versions[-1]
+            Write-Host "Latest version found: $latestVersion"
+            dotnet new install Uno.Templates::$latestVersion
+            echo "uno-version=$latestVersion" >> $env:GITHUB_OUTPUT
+          }
+          
+          # Verify installation
+          dotnet new list uno
+
+      - name: Prepare Build Matrix
+        id: set-matrix
+        shell: pwsh
+        run: |
+          $dotnetVersions = "${{ inputs.dotnet_versions || '9.0,10.0' }}".Split(',') | ForEach-Object { $_.Trim() }
+          $templates = "${{ inputs.templates || 'blank,recommended' }}".Split(',') | ForEach-Object { $_.Trim() }
+          
+          $matrix = @{
+            include = @()
+          }
+          
+          foreach ($dotnet in $dotnetVersions) {
+            foreach ($template in $templates) {
+              # Android
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'android'
+                os = 'ubuntu-latest'
+                framework = "net$dotnet-android"
+                rid = 'android-arm64'
+              }
+              
+              # iOS
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'ios'
+                os = 'macos-latest'
+                framework = "net$dotnet-ios"
+                rid = 'ios-arm64'
+              }
+              
+              # WebAssembly
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'wasm'
+                os = 'ubuntu-latest'
+                framework = "net$dotnet-browserwasm"
+                rid = 'browser-wasm'
+              }
+              
+              # Windows Desktop
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-windows'
+                os = 'windows-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'win-x64'
+                aot = $false
+              }
+              
+              # Windows Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-windows-aot'
+                os = 'windows-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'win-x64'
+                aot = $true
+              }
+              
+              # Linux Desktop
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-linux'
+                os = 'ubuntu-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'linux-x64'
+                aot = $false
+              }
+              
+              # Linux Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-linux-aot'
+                os = 'ubuntu-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'linux-x64'
+                aot = $true
+              }
+              
+              # macOS Desktop
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-macos'
+                os = 'macos-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'osx-x64'
+                aot = $false
+              }
+              
+              # macOS Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-macos-aot'
+                os = 'macos-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'osx-x64'
+                aot = $true
+              }
+            }
+          }
+          
+          $matrixJson = $matrix | ConvertTo-Json -Compress -Depth 10
+          echo "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
+          Write-Host "Matrix: $matrixJson"
+
+  build-and-measure:
+    needs: prepare-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ matrix.dotnet }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '${{ matrix.dotnet }}.x'
+
+      - name: Setup Xcode (for iOS)
+        if: matrix.platform == 'ios'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.0'
+
+      - name: Setup Apple Provisioning
+        if: matrix.platform == 'ios'
+        uses: ./.github/actions/manual-ios-signing
+        with:
+          certificate-base64: ${{ secrets.UNO_APPLE_PROD_CERT_BASE64 }}
+          certificate-password: ${{ secrets.UNO_APPLE_PROD_CERT_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.SIZE_CHECK_IOS_PROVISION_PROFILE_BASE64 }}
+          codesign-key: iPhone Distribution
+
+      - name: Setup Java (for Android)
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+
+      - name: Install Uno Templates
+        shell: pwsh
+        run: |
+          $version = "${{ needs.prepare-matrix.outputs.uno-version }}"
+          Write-Host "Installing Uno.Templates version $version"
+          dotnet new install Uno.Templates::$version
+
+      - name: Install workloads
+        shell: pwsh
+        run: |
+          $platform = "${{ matrix.platform }}"
+          
+          if ($platform -eq "android") {
+            dotnet workload install android
+          }
+          elseif ($platform -eq "ios") {
+            dotnet workload install ios
+          }
+          elseif ($platform -eq "wasm") {
+            dotnet workload install wasm-tools
+          }
+
+      - name: Create Project
+        shell: pwsh
+        run: |
+          $template = "${{ matrix.template }}"
+          $platform = "${{ matrix.platform }}"
+          $dotnetVersion = "${{ matrix.dotnet }}"
+          
+          # Create safe project name (replace hyphens with underscores)
+          $safePlatform = $platform -replace '-', '_'
+          $projectName = "UnoApp_$($template)_$($safePlatform)"
+          
+          # Map platform to Uno template platform name
+          $unoPlatform = switch ($platform) {
+            "android" { "android" }
+            "ios" { "ios" }
+            "wasm" { "wasm" }
+            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } { "desktop" }
+          }
+          
+          Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: net$dotnetVersion"
+          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform -tfm net$dotnetVersion
+          
+          echo "PROJECT_PATH=$projectName" >> $env:GITHUB_ENV
+          echo "PROJECT_NAME=$projectName" >> $env:GITHUB_ENV
+
+      - name: Build and Publish
+        shell: pwsh
+        run: |
+          $projectPath = $env:PROJECT_PATH
+          $platform = "${{ matrix.platform }}"
+          $framework = "${{ matrix.framework }}"
+          $rid = "${{ matrix.rid }}"
+          
+          # Start timing
+          $startTime = Get-Date
+          
+          # Debug: Show what's in the project directory
+          Write-Host "Contents of ${projectPath}:"
+          Get-ChildItem -Path $projectPath -Recurse | Select-Object FullName | Format-Table -AutoSize
+          
+          # Single project structure - find the main .csproj
+          $projectFile = Get-ChildItem -Path $projectPath -Filter "*.csproj" -Exclude "*.Tests.csproj" -Recurse | Select-Object -First 1
+          
+          if (-not $projectFile) {
+            Write-Error "Could not find project file in $projectPath"
+            exit 1
+          }
+          
+          Write-Host "Found project: $($projectFile.FullName)"
+          
+          switch ($platform) {
+            "android" {
+              Write-Host "Building Android AAB..."
+              dotnet publish $projectFile.FullName `
+                -f $framework `
+                -c Release `
+                -p:AndroidPackageFormat=aab `
+                -p:AndroidKeyStore=false `
+                -o publish
+            }
+            "ios" {
+              Write-Host "Building iOS IPA (signed device build)..."
+              dotnet publish $projectFile.FullName `
+                -f $framework `
+                -c Release `
+                -p:RuntimeIdentifier=$rid `
+                -p:ArchiveOnBuild=true `
+                -p:CodesignKey="$env:CODESIGN_KEY" `
+                -p:CodesignProvision="$env:PROVISIONING_UUID" `
+                -p:ApplicationId=uno.platform.performance `
+                -o publish
+            }
+            "wasm" {
+              Write-Host "Building WebAssembly..."
+              dotnet publish $projectFile.FullName `
+                -f $framework `
+                -c Release `
+                -o publish
+            }
+            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
+              $osName = $platform -replace "desktop-", "" -replace "-aot", ""
+              $isAot = "${{ matrix.aot }}" -eq "True"
+              
+              if ($isAot) {
+                Write-Host "Building $osName Desktop with Native AOT (self-contained)..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -r $rid `
+                  --self-contained true `
+                  -p:PublishAot=true `
+                  -o publish
+              } else {
+                Write-Host "Building $osName Desktop (self-contained)..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -r $rid `
+                  --self-contained true `
+                  -o publish
+              }
+            }
+          }
+          
+          $endTime = Get-Date
+          $buildTime = ($endTime - $startTime).TotalSeconds
+          
+          Write-Host "Build completed in $buildTime seconds"
+          echo "BUILD_TIME=$buildTime" >> $env:GITHUB_ENV
+
+      - name: Measure Package Size
+        shell: pwsh
+        run: |
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/measure-package-size.ps1"
+          & $scriptPath `
+            -PublishPath "publish" `
+            -Platform "${{ matrix.platform }}" `
+            -Template "${{ matrix.template }}" `
+            -DotNetVersion "${{ matrix.dotnet }}" `
+            -UnoVersion "${{ needs.prepare-matrix.outputs.uno-version }}" `
+            -BuildTime $env:BUILD_TIME `
+            -OutputPath "metrics.json"
+
+      - name: Upload Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          path: metrics.json
+          retention-days: 90
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          path: publish/
+          retention-days: 7
+
+  analyze-and-report:
+    needs: [prepare-matrix, build-and-measure]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    environment: Development
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download All Metrics
+        uses: actions/download-artifact@v4
+        with:
+          pattern: metrics-*
+          path: metrics
+
+      # Azure CLI is available on ubuntu-latest runner; verify before use
+      - name: Verify Azure CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az --version
+
+      - name: Azure Login (OIDC Managed Identity)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.SIZE_CHECK_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.SIZE_CHECK_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.SIZE_CHECK_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload to Azure Storage (OIDC)
+        shell: pwsh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+        run: |
+          az --version | Write-Host
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/upload-to-azure.ps1"
+          & $scriptPath -MetricsPath "metrics"
+
+      - name: Download Previous Results (OIDC)
+        shell: pwsh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+        run: |
+          # Download previous day's results for comparison using identity auth
+          $yesterday = (Get-Date).AddDays(-1)
+          $year = $yesterday.ToString("yyyy")
+          $searchPattern = $yesterday.ToString("MM-dd-")
+
+          Write-Host "Downloading previous results from year $year with pattern $searchPattern*"
+
+          New-Item -ItemType Directory -Force -Path "previous-metrics"
+
+          try {
+            az storage blob download-batch `
+              --account-name $env:AZURE_STORAGE_ACCOUNT `
+              --auth-mode login `
+              --source "template-size-tracking" `
+              --destination "previous-metrics" `
+              --pattern "$year/$searchPattern*" `
+              --output none
+            Write-Host "Successfully downloaded previous metrics"
+          }
+          catch {
+            Write-Host "No previous metrics found (this might be the first run)"
+          }
+
+      - name: Compare and Generate Report
+        id: compare
+        shell: pwsh
+        run: |
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/compare-and-alert.ps1"
+          & $scriptPath `
+            -CurrentMetricsPath "metrics" `
+            -PreviousMetricsPath "previous-metrics" `
+            -AlertThreshold $env:ALERT_THRESHOLD `
+            -FailureThreshold $env:FAILURE_THRESHOLD
+
+      - name: Generate Summary
+        shell: pwsh
+        run: |
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/generate-summary.ps1"
+          & $scriptPath -MetricsPath "metrics" -ComparisonPath "comparison.json"
+
+      - name: Create Issue on Alert
+        if: steps.compare.outputs.alert == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const alertContent = fs.readFileSync('alert-report.md', 'utf8');
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ Template Size Alert - ${new Date().toISOString().split('T')[0]}`,
+              body: alertContent,
+              labels: ['size-alert', 'automated']
+            });
+
+      - name: Fail on Critical Size Increase
+        if: steps.compare.outputs.critical == 'true'
+        run: |
+          echo "::error::Critical size increase detected (>${{ env.FAILURE_THRESHOLD }}%)"
+          exit 1
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
