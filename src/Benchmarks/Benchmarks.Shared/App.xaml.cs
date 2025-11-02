@@ -124,7 +124,7 @@ namespace Benchmarks
         /// <summary>
         /// Configures global Uno Platform logging
         /// </summary>
-        public static void InitializeLogging()
+        private static void InitializeLogging()
         {
             var factory = LoggerFactory.Create(builder =>
             {
@@ -139,9 +139,7 @@ namespace Benchmarks
 #endif
 
                 // Exclude logs below this level
-                builder.SetMinimumLevel(LogLevel.Trace);
-
-                builder.AddFilter("Uno.UI.Runtime.Skia", LogLevel.Trace);
+                builder.SetMinimumLevel(LogLevel.Information);
 
                 // Default filters for Uno Platform namespaces
                 builder.AddFilter("Uno", LogLevel.Warning);

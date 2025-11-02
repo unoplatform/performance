@@ -7,9 +7,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="Green">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <StackPanel Background="Transparent" Margin="1, 1, 0, 0">
+    <StackPanel>
         <StackPanel Orientation="Horizontal" Margin="15, 15, 0, 0" Spacing="15">
             <RadioButton Content="BenchmarkDotNet"
                          GroupName="BenchmarkType"
