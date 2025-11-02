@@ -272,7 +272,7 @@ jobs:
             "android" { "android" }
             "ios" { "ios" }
             "wasm" { "wasm" }
-            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos" } { "desktop" }
+            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } { "desktop" }
           }
           
           Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: net$dotnetVersion"
