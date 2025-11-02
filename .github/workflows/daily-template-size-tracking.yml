@@ -350,8 +350,6 @@ jobs:
                   --self-contained true `
                   -p:PublishAot=true `
                   -p:PublishTrimmed=true `
-                  -p:UnoXamlResourcesTrimming=true `
-                  -p:UnoEnableXamlTrimming=true `
                   -o publish
               } else {
                 Write-Host "Building $osName Desktop (self-contained)..."
