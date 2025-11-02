@@ -63,6 +63,7 @@ $metrics = @{
     dotnetVersion = $DotNetVersion
     unoVersion = $UnoVersion
     buildTimeSeconds = [math]::Round($BuildTime, 2)
+    isAot = $Platform -match "-aot$"
 }
 
 # Function to get directory size
@@ -184,7 +185,7 @@ switch ($Platform) {
         $metrics.fileCount = Get-FileCount -Path $PublishPath
     }
     
-    { $_ -in "windows", "desktop", "macos" } {
+    { $_ -match "^(windows|desktop|macos|desktop-windows|desktop-linux|desktop-macos)" } {
         Write-Host "Measuring Desktop publish folder..." -ForegroundColor Yellow
         $metrics.packageSize = Get-DirectorySize -Path $PublishPath
         $metrics.packagePath = "publish"
@@ -195,7 +196,7 @@ switch ($Platform) {
         # Count all files except directories
         $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Recurse -File | Measure-Object).Count
         # Find main executable
-        $exePattern = if ($Platform -eq "windows") { "*.exe" } else { "*" }
+        $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
         $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
         if ($mainExe) {
             $metrics.mainExecutableSize = $mainExe.Length

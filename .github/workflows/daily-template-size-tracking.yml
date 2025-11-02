@@ -132,6 +132,18 @@ jobs:
                 os = 'windows-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'win-x64'
+                aot = $false
+              }
+              
+              # Windows Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-windows-aot'
+                os = 'windows-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'win-x64'
+                aot = $true
               }
               
               # Linux Desktop
@@ -142,6 +154,18 @@ jobs:
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'linux-x64'
+                aot = $false
+              }
+              
+              # Linux Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-linux-aot'
+                os = 'ubuntu-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'linux-x64'
+                aot = $true
               }
               
               # macOS Desktop
@@ -152,6 +176,18 @@ jobs:
                 os = 'macos-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'osx-x64'
+                aot = $false
+              }
+              
+              # macOS Desktop (Native AOT)
+              $matrix.include += @{
+                dotnet = $dotnet
+                template = $template
+                platform = 'desktop-macos-aot'
+                os = 'macos-latest'
+                framework = "net$dotnet-desktop"
+                rid = 'osx-x64'
+                aot = $true
               }
             }
           }
@@ -299,15 +335,28 @@ jobs:
                 -c Release `
                 -o publish
             }
-            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos" } {
-              $osName = $platform -replace "desktop-", ""
-              Write-Host "Building $osName Desktop (self-contained)..."
-              dotnet publish $projectFile.FullName `
-                -f $framework `
-                -c Release `
-                -r $rid `
-                --self-contained true `
-                -o publish
+            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
+              $osName = $platform -replace "desktop-", "" -replace "-aot", ""
+              $isAot = "${{ matrix.aot }}" -eq "True"
+              
+              if ($isAot) {
+                Write-Host "Building $osName Desktop with Native AOT (self-contained)..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -r $rid `
+                  --self-contained true `
+                  -p:PublishAot=true `
+                  -o publish
+              } else {
+                Write-Host "Building $osName Desktop (self-contained)..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -r $rid `
+                  --self-contained true `
+                  -o publish
+              }
             }
           }
           
