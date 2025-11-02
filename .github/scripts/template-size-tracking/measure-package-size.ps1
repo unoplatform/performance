@@ -193,14 +193,28 @@ switch ($Platform) {
         # Desktop-specific metrics
         $metrics.totalPublishSize = $metrics.packageSize
         $metrics.fileCount = Get-FileCount -Path $PublishPath
-        # Count all files except directories
-        $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Recurse -File | Measure-Object).Count
-        # Find main executable
-        $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
-        $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
-        if ($mainExe) {
-            $metrics.mainExecutableSize = $mainExe.Length
-            $metrics.mainExecutableName = $mainExe.Name
+        # Assembly count logic
+        if ($metrics.isAot) {
+            # For AOT, count main executable as 1 assembly if present
+            $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
+            $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
+            if ($mainExe) {
+                $metrics.assemblyCount = 1
+                $metrics.mainExecutableSize = $mainExe.Length
+                $metrics.mainExecutableName = $mainExe.Name
+            } else {
+                $metrics.assemblyCount = 0
+            }
+        } else {
+            # For non-AOT, count DLLs
+            $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Filter "*.dll" -Recurse -File | Measure-Object).Count
+            # Find main executable as before
+            $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
+            $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
+            if ($mainExe) {
+                $metrics.mainExecutableSize = $mainExe.Length
+                $metrics.mainExecutableName = $mainExe.Name
+            }
         }
     }
 }
