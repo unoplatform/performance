@@ -288,6 +288,10 @@ jobs:
           $platform = "${{ matrix.platform }}"
           $framework = "${{ matrix.framework }}"
           $rid = "${{ matrix.rid }}"
+          $dotnetVersion = "${{ matrix.dotnet }}"
+          
+          # Disable XAML/Resource Trimming for net10 due to https://github.com/unoplatform/uno/issues/21731
+          $enableXamlTrimming = $dotnetVersion -ne "10.0"
           
           # Start timing
           $startTime = Get-Date
@@ -305,6 +309,7 @@ jobs:
           }
           
           Write-Host "Found project: $($projectFile.FullName)"
+          Write-Host "XAML/Resource Trimming enabled: $enableXamlTrimming"
           
           switch ($platform) {
             "android" {
@@ -335,8 +340,8 @@ jobs:
               dotnet publish $projectFile.FullName `
                 -f $framework `
                 -c Release `
-                -p:UnoXamlResourcesTrimming=true `
-                -p:UnoEnableXamlTrimming=true `
+                -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
+                -p:UnoEnableXamlTrimming=$enableXamlTrimming `
                 -o publish `
                 /bl:build.binlog
             }
@@ -363,8 +368,8 @@ jobs:
                   -r $rid `
                   --self-contained true `
                   -p:PublishTrimmed=true `
-                  -p:UnoXamlResourcesTrimming=true `
-                  -p:UnoEnableXamlTrimming=true `
+                  -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
+                  -p:UnoEnableXamlTrimming=$enableXamlTrimming `
                   -o publish `
                   /bl:build.binlog
               }
