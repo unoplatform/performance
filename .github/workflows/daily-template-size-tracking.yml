@@ -333,6 +333,8 @@ jobs:
               dotnet publish $projectFile.FullName `
                 -f $framework `
                 -c Release `
+                -p:UnoXamlResourcesTrimming=true `
+                -p:UnoEnableXamlTrimming=true `
                 -o publish
             }
             { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
@@ -347,6 +349,9 @@ jobs:
                   -r $rid `
                   --self-contained true `
                   -p:PublishAot=true `
+                  -p:PublishTrimmed=true `
+                  -p:UnoXamlResourcesTrimming=true `
+                  -p:UnoEnableXamlTrimming=true `
                   -o publish
               } else {
                 Write-Host "Building $osName Desktop (self-contained)..."
@@ -355,6 +360,9 @@ jobs:
                   -c Release `
                   -r $rid `
                   --self-contained true `
+                  -p:PublishTrimmed=true `
+                  -p:UnoXamlResourcesTrimming=true `
+                  -p:UnoEnableXamlTrimming=true `
                   -o publish
               }
             }
