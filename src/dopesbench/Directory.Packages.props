@@ -1,0 +1,22 @@
+<Project ToolsVersion="15.0">
+  <!--
+    To update the version of Uno, you should instead update the Sdk version in the global.json file.
+
+    See https://aka.platform.uno/using-uno-sdk for more information.
+    See https://aka.platform.uno/using-uno-sdk#implicit-packages for more information regarding the Implicit Packages.
+  -->
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Azure.Core" Version="1.46.2" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.24.1" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.1" />
+    <PackageVersion Include="BenchmarkDotNet.Annotations" Version="0.15.2" />
+    <PackageVersion Include="BenchmarkDotNet.Core" Version="0.10.14" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="Newtonsoft.Json.Bson" Version="1.0.3" />
+    <PackageVersion Include="System.Runtime.WindowsRuntime.UI.Xaml" Version="4.7.0" />
+    <PackageVersion Include="Uno.UI" Version="5.6.99" />
+    <PackageVersion Include="Xamarin.Essentials" Version="1.8.1" />
+  </ItemGroup>
+</Project>
