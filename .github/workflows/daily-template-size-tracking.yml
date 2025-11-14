@@ -258,7 +258,6 @@ jobs:
         shell: pwsh
         run: |
           $platform = "${{ matrix.platform }}"
-          $dotnetVersion = "${{ matrix.dotnet }}"
 
           if ($platform -eq "android") {
             dotnet workload install android
@@ -267,11 +266,7 @@ jobs:
             dotnet workload install ios
           }
           elseif ($platform -eq "wasm") {
-            if ($dotnetVersion -eq "9.0") {
-              dotnet workload install wasm-tools-net9
-            } else {
-              dotnet workload install wasm-tools
-            }
+            dotnet workload install wasm-tools
           }
 
       - name: Create Project
