@@ -118,8 +118,10 @@ foreach ($dotnetGroup in $groupedByDotNet) {
         
         foreach ($daysAgo in $daysToShow) {
             $histData = $null
-            if ($comparison -and $comparison.PSObject.Properties["historical"] -and $comparison.historical.ContainsKey($daysAgo)) {
-                $histData = $comparison.historical[$daysAgo]
+            $keyName = "days_$daysAgo"
+            
+            if ($comparison -and $comparison.PSObject.Properties["historical"] -and $comparison.historical.PSObject.Properties[$keyName]) {
+                $histData = $comparison.historical.$keyName
             }
             
             if ($histData -and $histData.compressedSize -gt 0) {

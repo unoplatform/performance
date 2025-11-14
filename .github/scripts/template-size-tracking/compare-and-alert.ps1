@@ -127,7 +127,7 @@ foreach ($current in $currentMetrics) {
         historical = @{}
     }
     
-    # Add historical data
+    # Add historical data with string keys for JSON serialization
     foreach ($daysAgo in $daysToLoad) {
         $historical = $historicalMetrics[$daysAgo] | Where-Object {
             $_.dotnetVersion -eq $current.dotnetVersion -and
@@ -143,12 +143,12 @@ foreach ($current in $currentMetrics) {
                 $percentChange = [math]::Round((($current.compressedSize - $compressedSize) / $compressedSize) * 100, 2)
             }
             
-            $comparison.historical[$daysAgo] = @{
+            $comparison.historical["days_$daysAgo"] = @{
                 compressedSize = $compressedSize
                 percentChange = $percentChange
             }
         } else {
-            $comparison.historical[$daysAgo] = @{
+            $comparison.historical["days_$daysAgo"] = @{
                 compressedSize = 0
                 percentChange = 0
             }
