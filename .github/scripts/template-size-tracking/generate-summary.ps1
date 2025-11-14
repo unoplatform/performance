@@ -68,8 +68,8 @@ foreach ($dotnetGroup in $groupedByDotNet) {
 
 ## .NET $dotnetVersion
 
-| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change | 1 Day Ago | 2 Days Ago | 3 Days Ago | 4 Days Ago | 5 Days Ago | 1 Week Ago | 1 Month Ago |
-|----------|----------|------|------------|-------|------------|------------|--------|-----------|------------|------------|------------|------------|------------|-------------|
+| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change | 1 day | 2 days | 3 days | 4 days | 5 days | 1 week | 1 month |
+|----------|----------|------|------------|-------|------------|------------|--------|-------|--------|--------|--------|--------|--------|---------|
 
 "@
     
