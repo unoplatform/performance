@@ -488,6 +488,44 @@ jobs:
             Write-Host "No previous metrics found (this might be the first run)"
           }
 
+      - name: Download Historical Results (OIDC)
+        shell: pwsh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+        run: |
+          # Download historical results for trend analysis
+          # Days to fetch: 1, 2, 3, 4, 5, 7, 30 days ago
+          $daysToFetch = @(1, 2, 3, 4, 5, 7, 30)
+          
+          New-Item -ItemType Directory -Force -Path "historical-metrics"
+          
+          foreach ($daysAgo in $daysToFetch) {
+            $targetDate = (Get-Date).AddDays(-$daysAgo)
+            $year = $targetDate.ToString("yyyy")
+            $searchPattern = $targetDate.ToString("MM-dd-")
+            
+            Write-Host "Downloading results from $daysAgo day(s) ago (year $year, pattern $searchPattern*)"
+            
+            $destFolder = "historical-metrics/$daysAgo-days-ago"
+            New-Item -ItemType Directory -Force -Path $destFolder
+            
+            try {
+              az storage blob download-batch `
+                --account-name $env:AZURE_STORAGE_ACCOUNT `
+                --auth-mode login `
+                --source "template-size-tracking" `
+                --destination $destFolder `
+                --pattern "$year/$searchPattern*" `
+                --output none
+              Write-Host "  ✓ Downloaded metrics from $daysAgo day(s) ago"
+            }
+            catch {
+              Write-Host "  ⚠ No metrics found for $daysAgo day(s) ago"
+            }
+          }
+          
+          Write-Host "Historical metrics download complete"
+
       - name: Compare and Generate Report
         id: compare
         shell: pwsh
@@ -496,6 +534,7 @@ jobs:
           & $scriptPath `
             -CurrentMetricsPath "metrics" `
             -PreviousMetricsPath "previous-metrics" `
+            -HistoricalMetricsPath "historical-metrics" `
             -AlertThreshold $env:ALERT_THRESHOLD `
             -FailureThreshold $env:FAILURE_THRESHOLD
 

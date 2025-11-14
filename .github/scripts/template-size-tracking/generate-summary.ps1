@@ -68,8 +68,8 @@ foreach ($dotnetGroup in $groupedByDotNet) {
 
 ## .NET $dotnetVersion
 
-| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change |
-|----------|----------|------|------------|-------|------------|------------|--------|
+| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change | 1 Day Ago | 2 Days Ago | 3 Days Ago | 4 Days Ago | 5 Days Ago | 1 Week Ago | 1 Month Ago |
+|----------|----------|------|------------|-------|------------|------------|--------|-----------|------------|------------|------------|------------|------------|-------------|
 
 "@
     
@@ -112,7 +112,36 @@ foreach ($dotnetGroup in $groupedByDotNet) {
             $changeIndicator = "—"
         }
         
-        $summary += "| $($metric.template) | $($metric.platform) | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator |`n"
+        # Build historical columns
+        $historicalColumns = @()
+        $daysToShow = @(1, 2, 3, 4, 5, 7, 30)
+        
+        foreach ($daysAgo in $daysToShow) {
+            $histData = $null
+            if ($comparison -and $comparison.PSObject.Properties["historical"] -and $comparison.historical.ContainsKey($daysAgo)) {
+                $histData = $comparison.historical[$daysAgo]
+            }
+            
+            if ($histData -and $histData.compressedSize -gt 0) {
+                $histSizeMB = [math]::Round($histData.compressedSize / 1MB, 2)
+                $histPercent = $histData.percentChange
+                
+                # Format percentage with appropriate sign
+                $percentStr = if ($histPercent -gt 0) {
+                    "+$histPercent%"
+                } elseif ($histPercent -lt 0) {
+                    "$histPercent%"
+                } else {
+                    "0%"
+                }
+                
+                $historicalColumns += "$histSizeMB MB ($percentStr)"
+            } else {
+                $historicalColumns += "—"
+            }
+        }
+        
+        $summary += "| $($metric.template) | $($metric.platform) | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator | $($historicalColumns -join ' | ') |`n"
     }
 }
 

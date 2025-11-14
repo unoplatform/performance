@@ -24,6 +24,9 @@ param(
     [string]$PreviousMetricsPath,
     
     [Parameter(Mandatory=$false)]
+    [string]$HistoricalMetricsPath = "historical-metrics",
+    
+    [Parameter(Mandatory=$false)]
     [decimal]$AlertThreshold = 10,
     
     [Parameter(Mandatory=$false)]
@@ -66,6 +69,34 @@ if (Test-Path $PreviousMetricsPath) {
     Write-Host "No previous metrics found - this appears to be the first run"
 }
 
+# Load historical metrics for trend analysis
+$historicalMetrics = @{}
+$daysToLoad = @(1, 2, 3, 4, 5, 7, 30)
+
+foreach ($daysAgo in $daysToLoad) {
+    $historicalPath = Join-Path $HistoricalMetricsPath "$daysAgo-days-ago"
+    
+    if (Test-Path $historicalPath) {
+        $historicalFiles = Get-ChildItem -Path $historicalPath -Filter "*.json" -Recurse
+        $metrics = @()
+        
+        foreach ($file in $historicalFiles) {
+            try {
+                $content = Get-Content $file.FullName -Raw | ConvertFrom-Json
+                $metrics += $content
+            } catch {
+                Write-Warning "Could not parse historical metric file: $($file.Name)"
+            }
+        }
+        
+        $historicalMetrics[$daysAgo] = $metrics
+        Write-Host "Loaded $($metrics.Count) metrics from $daysAgo day(s) ago"
+    } else {
+        Write-Host "No historical metrics found for $daysAgo day(s) ago"
+        $historicalMetrics[$daysAgo] = @()
+    }
+}
+
 # Compare metrics
 $comparisons = @()
 $alerts = @()
@@ -84,6 +115,7 @@ foreach ($current in $currentMetrics) {
         template = $current.template
         platform = $current.platform
         currentSize = $current.packageSize
+        currentCompressedSize = $current.compressedSize
         currentBuildTime = $current.buildTimeSeconds
         previousSize = if ($previous) { $previous.packageSize } else { 0 }
         previousBuildTime = if ($previous) { $previous.buildTimeSeconds } else { 0 }
@@ -92,6 +124,35 @@ foreach ($current in $currentMetrics) {
         buildTimeChange = 0
         buildTimeChangePercent = 0
         status = "new"
+        historical = @{}
+    }
+    
+    # Add historical data
+    foreach ($daysAgo in $daysToLoad) {
+        $historical = $historicalMetrics[$daysAgo] | Where-Object {
+            $_.dotnetVersion -eq $current.dotnetVersion -and
+            $_.template -eq $current.template -and
+            $_.platform -eq $current.platform
+        } | Select-Object -First 1
+        
+        if ($historical) {
+            $compressedSize = if ($historical.PSObject.Properties["compressedSize"]) { $historical.compressedSize } else { 0 }
+            $percentChange = 0
+            
+            if ($compressedSize -gt 0 -and $current.compressedSize -gt 0) {
+                $percentChange = [math]::Round((($current.compressedSize - $compressedSize) / $compressedSize) * 100, 2)
+            }
+            
+            $comparison.historical[$daysAgo] = @{
+                compressedSize = $compressedSize
+                percentChange = $percentChange
+            }
+        } else {
+            $comparison.historical[$daysAgo] = @{
+                compressedSize = 0
+                percentChange = 0
+            }
+        }
     }
     
     if ($previous) {
