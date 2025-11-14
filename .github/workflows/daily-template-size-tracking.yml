@@ -231,6 +231,13 @@ jobs:
         with:
           xcode-version: ${{ matrix.dotnet == '10.0' && '26.1' || '26.0' }}
 
+      - name: Download iOS Platform (for Xcode 26.1)
+        if: matrix.platform == 'ios' && matrix.dotnet == '10.0'
+        shell: bash
+        run: |
+          echo "Downloading iOS platform for Xcode 26.1..."
+          xcodebuild -downloadPlatform iOS || echo "Download completed or platform already available"
+
       - name: Setup Apple Provisioning
         if: matrix.platform == 'ios'
         uses: ./.github/actions/manual-ios-signing
@@ -345,7 +352,6 @@ jobs:
                 -p:CodesignKey="$env:CODESIGN_KEY" `
                 -p:CodesignProvision="$env:PROVISIONING_UUID" `
                 -p:ApplicationId=uno.platform.performance `
-                -p:EnableSimulatorSupport=false `
                 -o publish `
                 /bl:build.binlog
             }
