@@ -93,16 +93,17 @@ foreach ($dotnetGroup in $groupedByDotNet) {
         if ($comparison -and $comparison.status -ne "new") {
             $changePercent = $comparison.sizeChangePercent
             
+            # Red up arrow for degradations (increases), green down arrow for improvements (decreases)
             if ($changePercent -ge 20) {
-                $changeIndicator = "+$changePercent% 🔴"
+                $changeIndicator = "+$changePercent% 🔴⬆️"
             } elseif ($changePercent -ge 10) {
-                $changeIndicator = "+$changePercent% 🟡"
+                $changeIndicator = "+$changePercent% 🟠⬆️"
             } elseif ($changePercent -ge 5) {
-                $changeIndicator = "+$changePercent% 🟠"
+                $changeIndicator = "+$changePercent% 🟡⬆️"
             } elseif ($changePercent -gt 0) {
-                $changeIndicator = "+$changePercent% ↗️"
+                $changeIndicator = "+$changePercent% 🔴⬆️"
             } elseif ($changePercent -lt 0) {
-                $changeIndicator = "$changePercent% 🟢"
+                $changeIndicator = "$changePercent% 🟢⬇️"
             } else {
                 $changeIndicator = "—"
             }
@@ -128,11 +129,12 @@ foreach ($dotnetGroup in $groupedByDotNet) {
                 $histSizeMB = [math]::Round($histData.compressedSize / 1MB, 2)
                 $histPercent = $histData.percentChange
                 
-                # Format percentage with appropriate sign
+                # Format percentage with appropriate sign and trend icon
+                # Green down arrow for improvements (current is smaller than historical), red up arrow for degradations (current is larger)
                 $percentStr = if ($histPercent -gt 0) {
-                    "+$histPercent%"
+                    "+$histPercent% 🔴⬆️"
                 } elseif ($histPercent -lt 0) {
-                    "$histPercent%"
+                    "$histPercent% 🟢⬇️"
                 } else {
                     "0%"
                 }
