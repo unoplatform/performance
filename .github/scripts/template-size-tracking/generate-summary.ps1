@@ -68,8 +68,8 @@ foreach ($dotnetGroup in $groupedByDotNet) {
 
 ## .NET $dotnetVersion
 
-| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change |
-|----------|----------|------|------------|-------|------------|------------|--------|
+| Template | Platform | Size | Compressed | Files | Assemblies | Build Time | Change | 1 day | 2 days | 3 days | 4 days | 5 days | 1 week | 1 month |
+|----------|----------|------|------------|-------|------------|------------|--------|-------|--------|--------|--------|--------|--------|---------|
 
 "@
     
@@ -81,8 +81,8 @@ foreach ($dotnetGroup in $groupedByDotNet) {
             $_.platform -eq $metric.platform
         } | Select-Object -First 1
         
-        $sizeMB = [math]::Round($metric.packageSize / 1MB, 2)
-        $compressedMB = [math]::Round($metric.compressedSize / 1MB, 2)
+        $sizeMB = [math]::Round($metric.packageSize / 1MB, 1)
+        $compressedMB = [math]::Round($metric.compressedSize / 1MB, 1)
         if ($metric.PSObject.Properties["buildTimeFormatted"] -and $metric.buildTimeFormatted) {
             $buildTime = $metric.buildTimeFormatted
         } else {
@@ -91,18 +91,17 @@ foreach ($dotnetGroup in $groupedByDotNet) {
         
         $changeIndicator = ""
         if ($comparison -and $comparison.status -ne "new") {
-            $changePercent = $comparison.sizeChangePercent
+            $changePercent = [math]::Round($comparison.sizeChangePercent, 1)
             
-            if ($changePercent -ge 20) {
+            # Color circles based on change: 🟢 for improvements >1%, 🟠 for degradations <1%, 🔴 for degradations >1%
+            if ($changePercent -gt 1) {
                 $changeIndicator = "+$changePercent% 🔴"
-            } elseif ($changePercent -ge 10) {
-                $changeIndicator = "+$changePercent% 🟡"
-            } elseif ($changePercent -ge 5) {
-                $changeIndicator = "+$changePercent% 🟠"
             } elseif ($changePercent -gt 0) {
-                $changeIndicator = "+$changePercent% ↗️"
-            } elseif ($changePercent -lt 0) {
+                $changeIndicator = "+$changePercent% 🟠"
+            } elseif ($changePercent -lt -1) {
                 $changeIndicator = "$changePercent% 🟢"
+            } elseif ($changePercent -lt 0) {
+                $changeIndicator = "$changePercent% 🟠"
             } else {
                 $changeIndicator = "—"
             }
@@ -112,7 +111,43 @@ foreach ($dotnetGroup in $groupedByDotNet) {
             $changeIndicator = "—"
         }
         
-        $summary += "| $($metric.template) | $($metric.platform) | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator |`n"
+        # Build historical columns
+        $historicalColumns = @()
+        $daysToShow = @(1, 2, 3, 4, 5, 7, 30)
+        
+        foreach ($daysAgo in $daysToShow) {
+            $histData = $null
+            $keyName = "days_$daysAgo"
+            
+            if ($comparison -and $comparison.PSObject.Properties["historical"] -and $comparison.historical.PSObject.Properties[$keyName]) {
+                $histData = $comparison.historical.$keyName
+            }
+            
+            if ($histData -and $histData.compressedSize -gt 0) {
+                $histSizeMB = [math]::Round($histData.compressedSize / 1MB, 1)
+                $histPercent = [math]::Round($histData.percentChange, 1)
+                
+                # Format percentage with color circle
+                # 🟢 for improvements >1%, 🟠 for changes <1%, 🔴 for degradations >1%
+                $percentStr = if ($histPercent -gt 1) {
+                    "+$histPercent% 🔴"
+                } elseif ($histPercent -gt 0) {
+                    "+$histPercent% 🟠"
+                } elseif ($histPercent -lt -1) {
+                    "$histPercent% 🟢"
+                } elseif ($histPercent -lt 0) {
+                    "$histPercent% 🟠"
+                } else {
+                    "0%"
+                }
+                
+                $historicalColumns += "$histSizeMB MB ($percentStr)"
+            } else {
+                $historicalColumns += "—"
+            }
+        }
+        
+        $summary += "| $($metric.template) | $($metric.platform) | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator | $($historicalColumns -join ' | ') |`n"
     }
 }
 

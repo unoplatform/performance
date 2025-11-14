@@ -53,7 +53,7 @@ jobs:
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '9.0.306'
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
@@ -104,14 +104,16 @@ jobs:
                 rid = 'android-arm64'
               }
               
-              # iOS
-              $matrix.include += @{
-                dotnet = $dotnet
-                template = $template
-                platform = 'ios'
-                os = 'macos-latest'
-                framework = "net$dotnet-ios"
-                rid = 'ios-arm64'
+              # iOS (skip .NET 10 - requires Xcode 26.1 which has simulator runtime issues on GitHub runners)
+              if ($dotnet -ne "10.0") {
+                $matrix.include += @{
+                  dotnet = $dotnet
+                  template = $template
+                  platform = 'ios'
+                  os = 'macos-latest'
+                  framework = "net$dotnet-ios"
+                  rid = 'ios-arm64'
+                }
               }
               
               # WebAssembly
@@ -202,7 +204,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
-    
+
+    env:
+      DOTNET_INSTALL_DIR: ${{ github.workspace }}/.dotnet
+      DOTNET_ROOT: ${{ github.workspace }}/.dotnet
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -210,7 +216,16 @@ jobs:
       - name: Setup .NET ${{ matrix.dotnet }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '${{ matrix.dotnet }}.x'
+          dotnet-version: |
+            ${{ matrix.dotnet == '9.0' && '9.0.306' || format('{0}.x', matrix.dotnet) }}
+
+      - name: Verify .NET installation
+        shell: pwsh
+        run: |
+          Write-Host "DOTNET_ROOT: $env:DOTNET_ROOT"
+          Write-Host "DOTNET_INSTALL_DIR: $env:DOTNET_INSTALL_DIR"
+          dotnet --version
+          dotnet --list-sdks
 
       - name: Setup Xcode (for iOS)
         if: matrix.platform == 'ios'
@@ -245,7 +260,7 @@ jobs:
         shell: pwsh
         run: |
           $platform = "${{ matrix.platform }}"
-          
+
           if ($platform -eq "android") {
             dotnet workload install android
           }
@@ -488,6 +503,44 @@ jobs:
             Write-Host "No previous metrics found (this might be the first run)"
           }
 
+      - name: Download Historical Results (OIDC)
+        shell: pwsh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.SIZE_CHECK_AZURE_STORAGE_ACCOUNT_NAME }}
+        run: |
+          # Download historical results for trend analysis
+          # Days to fetch: 1, 2, 3, 4, 5, 7, 30 days ago
+          $daysToFetch = @(1, 2, 3, 4, 5, 7, 30)
+
+          New-Item -ItemType Directory -Force -Path "historical-metrics"
+
+          foreach ($daysAgo in $daysToFetch) {
+            $targetDate = (Get-Date).AddDays(-$daysAgo)
+            $year = $targetDate.ToString("yyyy")
+            $searchPattern = $targetDate.ToString("MM-dd-")
+
+            Write-Host "Downloading results from $daysAgo day(s) ago (year $year, pattern $searchPattern*)"
+
+            $destFolder = "historical-metrics/$daysAgo-days-ago"
+            New-Item -ItemType Directory -Force -Path $destFolder
+
+            try {
+              az storage blob download-batch `
+                --account-name $env:AZURE_STORAGE_ACCOUNT `
+                --auth-mode login `
+                --source "template-size-tracking" `
+                --destination $destFolder `
+                --pattern "$year/$searchPattern*" `
+                --output none
+              Write-Host "  ✓ Downloaded metrics from $daysAgo day(s) ago"
+            }
+            catch {
+              Write-Host "  ⚠ No metrics found for $daysAgo day(s) ago"
+            }
+          }
+
+          Write-Host "Historical metrics download complete"
+
       - name: Compare and Generate Report
         id: compare
         shell: pwsh
@@ -496,6 +549,7 @@ jobs:
           & $scriptPath `
             -CurrentMetricsPath "metrics" `
             -PreviousMetricsPath "previous-metrics" `
+            -HistoricalMetricsPath "historical-metrics" `
             -AlertThreshold $env:ALERT_THRESHOLD `
             -FailureThreshold $env:FAILURE_THRESHOLD
 
