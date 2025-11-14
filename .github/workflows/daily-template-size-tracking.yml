@@ -202,7 +202,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
-    
+
+    env:
+      DOTNET_INSTALL_DIR: ${{ github.workspace }}/.dotnet
+      DOTNET_ROOT: ${{ github.workspace }}/.dotnet
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -210,13 +214,22 @@ jobs:
       - name: Setup .NET ${{ matrix.dotnet }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '${{ matrix.dotnet }}.x'
+          dotnet-version: |
+            ${{ matrix.dotnet == '9.0' && '9.0.306' || format('{0}.x', matrix.dotnet) }}
+
+      - name: Verify .NET installation
+        shell: pwsh
+        run: |
+          Write-Host "DOTNET_ROOT: $env:DOTNET_ROOT"
+          Write-Host "DOTNET_INSTALL_DIR: $env:DOTNET_INSTALL_DIR"
+          dotnet --version
+          dotnet --list-sdks
 
       - name: Setup Xcode (for iOS)
         if: matrix.platform == 'ios'
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.0'
+          xcode-version: ${{ matrix.dotnet == '10.0' && '26.1' || '26.0' }}
 
       - name: Setup Apple Provisioning
         if: matrix.platform == 'ios'
@@ -245,7 +258,8 @@ jobs:
         shell: pwsh
         run: |
           $platform = "${{ matrix.platform }}"
-          
+          $dotnetVersion = "${{ matrix.dotnet }}"
+
           if ($platform -eq "android") {
             dotnet workload install android
           }
@@ -253,7 +267,11 @@ jobs:
             dotnet workload install ios
           }
           elseif ($platform -eq "wasm") {
-            dotnet workload install wasm-tools
+            if ($dotnetVersion -eq "9.0") {
+              dotnet workload install wasm-tools-net9
+            } else {
+              dotnet workload install wasm-tools
+            }
           }
 
       - name: Create Project
