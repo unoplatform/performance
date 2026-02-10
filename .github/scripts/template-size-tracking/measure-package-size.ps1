@@ -13,7 +13,7 @@
     Full description including platform, OS, and build type (e.g., desktop-windows-aot).
 
 .PARAMETER IsAot
-    Whether this is a Native AOT build.
+    Whether this is a Native AOT build (mandatory).
 
 .PARAMETER Template
     Template type (blank, recommended).
