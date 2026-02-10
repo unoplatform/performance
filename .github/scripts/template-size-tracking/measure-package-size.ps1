@@ -215,10 +215,13 @@ switch ($Platform) {
         # Desktop-specific metrics
         $metrics.totalPublishSize = $metrics.packageSize
         $metrics.fileCount = Get-FileCount -Path $PublishPath
+        
+        # Determine executable pattern based on OS
+        $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
+        
         # Assembly count logic
         if ($metrics.isAot) {
             # For AOT, count main executable as 1 assembly if present
-            $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.assemblyCount = 1
@@ -231,7 +234,6 @@ switch ($Platform) {
             # For non-AOT, count DLLs
             $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Filter "*.dll" -Recurse -File | Measure-Object).Count
             # Find main executable as before
-            $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.mainExecutableSize = $mainExe.Length

@@ -421,17 +421,16 @@ jobs:
         run: |
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/measure-package-size.ps1"
           
-          # Determine OS from description or platform
+          # Determine OS from description
+          # For desktop platforms: extract from description (desktop-windows-aot -> windows)
+          # For other platforms: use the platform name directly (android -> android)
           $description = "${{ matrix.description }}"
           $platform = "${{ matrix.platform }}"
           $os = switch -Regex ($description) {
             "windows" { "windows" }
             "linux" { "linux" }
             "macos" { "macos" }
-            "android" { "android" }
-            "ios" { "ios" }
-            "wasm" { "wasm" }
-            default { $platform }
+            default { $platform }  # For android, ios, wasm - description equals platform
           }
           
           & $scriptPath `
