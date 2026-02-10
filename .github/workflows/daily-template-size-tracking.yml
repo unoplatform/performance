@@ -420,10 +420,25 @@ jobs:
         shell: pwsh
         run: |
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE ".github/scripts/template-size-tracking/measure-package-size.ps1"
+          
+          # Determine OS from description or platform
+          $description = "${{ matrix.description }}"
+          $platform = "${{ matrix.platform }}"
+          $os = switch -Regex ($description) {
+            "windows" { "windows" }
+            "linux" { "linux" }
+            "macos" { "macos" }
+            "android" { "android" }
+            "ios" { "ios" }
+            "wasm" { "wasm" }
+            default { $platform }
+          }
+          
           & $scriptPath `
             -PublishPath "publish" `
             -Platform "${{ matrix.platform }}" `
             -Description "${{ matrix.description }}" `
+            -OS $os `
             -IsAot ${{ matrix.aot }} `
             -Template "${{ matrix.template }}" `
             -DotNetVersion "${{ matrix.dotnet }}" `

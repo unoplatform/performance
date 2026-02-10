@@ -12,6 +12,9 @@
 .PARAMETER Description
     Full description including platform, OS, and build type (e.g., desktop-windows-aot).
 
+.PARAMETER OS
+    Operating system (windows, linux, macos, android, ios, wasm).
+
 .PARAMETER IsAot
     Whether this is a Native AOT build (mandatory).
 
@@ -42,6 +45,9 @@ param(
     [string]$Description,
     
     [Parameter(Mandatory=$true)]
+    [string]$OS,
+    
+    [Parameter(Mandatory=$true)]
     [bool]$IsAot,
     
     [Parameter(Mandatory=$true)]
@@ -65,6 +71,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== Measuring Package Size ===" -ForegroundColor Cyan
 Write-Host "Platform: $Platform"
 Write-Host "Description: $Description"
+Write-Host "OS: $OS"
 Write-Host "Is AOT: $IsAot"
 Write-Host "Template: $Template"
 Write-Host "Publish Path: $PublishPath"
@@ -211,7 +218,7 @@ switch ($Platform) {
         # Assembly count logic
         if ($metrics.isAot) {
             # For AOT, count main executable as 1 assembly if present
-            $exePattern = if ($Description -match "windows") { "*.exe" } else { "*" }
+            $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.assemblyCount = 1
@@ -224,7 +231,7 @@ switch ($Platform) {
             # For non-AOT, count DLLs
             $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Filter "*.dll" -Recurse -File | Measure-Object).Count
             # Find main executable as before
-            $exePattern = if ($Description -match "windows") { "*.exe" } else { "*" }
+            $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.mainExecutableSize = $mainExe.Length
