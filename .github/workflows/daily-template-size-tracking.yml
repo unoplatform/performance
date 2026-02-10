@@ -424,7 +424,7 @@ jobs:
             -PublishPath "publish" `
             -Platform "${{ matrix.platform }}" `
             -Description "${{ matrix.description }}" `
-            -IsAot $${{ matrix.aot }} `
+            -IsAot ${{ matrix.aot }} `
             -Template "${{ matrix.template }}" `
             -DotNetVersion "${{ matrix.dotnet }}" `
             -UnoVersion "${{ needs.prepare-matrix.outputs.uno-version }}" `
