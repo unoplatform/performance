@@ -218,7 +218,7 @@ switch ($Platform) {
         $metrics.fileCount = Get-FileCount -Path $PublishPath
         
         # Determine executable pattern based on OS
-        $exePattern = if ($OS -match "windows") { "*.exe" } else { "*" }
+        $exePattern = if ($OS -like "*windows*") { "*.exe" } else { "*" }
         
         # Assembly count logic
         if ($metrics.isAot) {
