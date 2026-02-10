@@ -82,6 +82,7 @@ $metrics = @{
     template = $Template
     platform = $Platform
     description = $Description
+    os = $OS
     dotnetVersion = $DotNetVersion
     unoVersion = $UnoVersion
     buildTimeSeconds = [math]::Round($BuildTime, 2)
@@ -217,7 +218,7 @@ switch ($Platform) {
         $metrics.fileCount = Get-FileCount -Path $PublishPath
         
         # Determine executable pattern based on OS
-        $exePattern = if ($OS -eq "windows") { "*.exe" } else { "*" }
+        $exePattern = if ($OS -match "windows") { "*.exe" } else { "*" }
         
         # Assembly count logic
         if ($metrics.isAot) {
