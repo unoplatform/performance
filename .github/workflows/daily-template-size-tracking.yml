@@ -233,6 +233,17 @@ jobs:
         with:
           xcode-version: '26.0'
 
+      - name: Download Xcode iOS Platforms (for iOS)
+        if: matrix.platform == 'ios'
+        shell: pwsh
+        run: |
+          Write-Host "Running: xcodebuild -runFirstLaunch"
+          xcodebuild -runFirstLaunch
+          Write-Host "Available Xcode Devices:"
+          xcrun simctl list
+          Write-Host "Installing iOS Platform…"
+          xcodebuild -downloadPlatform iOS
+
       - name: Setup Apple Provisioning
         if: matrix.platform == 'ios'
         uses: ./.github/actions/manual-ios-signing
