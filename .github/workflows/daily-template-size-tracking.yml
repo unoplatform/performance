@@ -103,6 +103,7 @@ jobs:
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-android"
                 rid = 'android-arm64'
+                aot = $false
               }
               
               # iOS (skip .NET 10 - requires Xcode 26.1 which has simulator runtime issues on GitHub runners)
@@ -115,6 +116,7 @@ jobs:
                   os = 'macos-latest'
                   framework = "net$dotnet-ios"
                   rid = 'ios-arm64'
+                  aot = $false
                 }
               }
               
@@ -127,6 +129,7 @@ jobs:
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-browserwasm"
                 rid = 'browser-wasm'
+                aot = $false
               }
               
               # Windows Desktop
@@ -421,6 +424,7 @@ jobs:
             -PublishPath "publish" `
             -Platform "${{ matrix.platform }}" `
             -Description "${{ matrix.description }}" `
+            -IsAot $${{ matrix.aot }} `
             -Template "${{ matrix.template }}" `
             -DotNetVersion "${{ matrix.dotnet }}" `
             -UnoVersion "${{ needs.prepare-matrix.outputs.uno-version }}" `

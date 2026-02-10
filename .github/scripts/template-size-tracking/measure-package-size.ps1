@@ -12,6 +12,9 @@
 .PARAMETER Description
     Full description including platform, OS, and build type (e.g., desktop-windows-aot).
 
+.PARAMETER IsAot
+    Whether this is a Native AOT build.
+
 .PARAMETER Template
     Template type (blank, recommended).
 
@@ -39,6 +42,9 @@ param(
     [string]$Description,
     
     [Parameter(Mandatory=$true)]
+    [bool]$IsAot,
+    
+    [Parameter(Mandatory=$true)]
     [string]$Template,
     
     [Parameter(Mandatory=$true)]
@@ -59,6 +65,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== Measuring Package Size ===" -ForegroundColor Cyan
 Write-Host "Platform: $Platform"
 Write-Host "Description: $Description"
+Write-Host "Is AOT: $IsAot"
 Write-Host "Template: $Template"
 Write-Host "Publish Path: $PublishPath"
 
@@ -71,7 +78,7 @@ $metrics = @{
     dotnetVersion = $DotNetVersion
     unoVersion = $UnoVersion
     buildTimeSeconds = [math]::Round($BuildTime, 2)
-    isAot = $Description -match "-aot$"
+    isAot = $IsAot
 }
 
 # Function to get directory size
