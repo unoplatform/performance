@@ -96,6 +96,7 @@ jobs:
             foreach ($template in $templates) {
               # Android
               $matrix.include += @{
+                description = 'android'
                 dotnet = $dotnet
                 template = $template
                 platform = 'android'
@@ -107,6 +108,7 @@ jobs:
               # iOS (skip .NET 10 - requires Xcode 26.1 which has simulator runtime issues on GitHub runners)
               if ($dotnet -ne "10.0") {
                 $matrix.include += @{
+                  description = 'ios'
                   dotnet = $dotnet
                   template = $template
                   platform = 'ios'
@@ -118,6 +120,7 @@ jobs:
               
               # WebAssembly
               $matrix.include += @{
+                description = 'wasm'
                 dotnet = $dotnet
                 template = $template
                 platform = 'wasm'
@@ -128,9 +131,10 @@ jobs:
               
               # Windows Desktop
               $matrix.include += @{
+                description = 'desktop-windows'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-windows'
+                platform = 'desktop'
                 os = 'windows-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'win-x64'
@@ -139,9 +143,10 @@ jobs:
               
               # Windows Desktop (Native AOT)
               $matrix.include += @{
+                description = 'desktop-windows-aot'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-windows-aot'
+                platform = 'desktop'
                 os = 'windows-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'win-x64'
@@ -150,9 +155,10 @@ jobs:
               
               # Linux Desktop
               $matrix.include += @{
+                description = 'desktop-linux'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-linux'
+                platform = 'desktop'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'linux-x64'
@@ -161,9 +167,10 @@ jobs:
               
               # Linux Desktop (Native AOT)
               $matrix.include += @{
+                description = 'desktop-linux-aot'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-linux-aot'
+                platform = 'desktop'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'linux-x64'
@@ -172,9 +179,10 @@ jobs:
               
               # macOS Desktop
               $matrix.include += @{
+                description = 'desktop-macos'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-macos'
+                platform = 'desktop'
                 os = 'macos-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'osx-x64'
@@ -183,9 +191,10 @@ jobs:
               
               # macOS Desktop (Native AOT)
               $matrix.include += @{
+                description = 'desktop-macos-aot'
                 dotnet = $dotnet
                 template = $template
-                platform = 'desktop-macos-aot'
+                platform = 'desktop'
                 os = 'macos-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'osx-x64'
@@ -287,7 +296,7 @@ jobs:
             "android" { "android" }
             "ios" { "ios" }
             "wasm" { "wasm" }
-            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } { "desktop" }
+            "desktop" { "desktop" }
           }
           
           Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: net$dotnetVersion"
@@ -360,12 +369,11 @@ jobs:
                 -o publish `
                 /bl:build.binlog
             }
-            { $_ -in "desktop-windows", "desktop-linux", "desktop-macos", "desktop-windows-aot", "desktop-linux-aot", "desktop-macos-aot" } {
-              $osName = $platform -replace "desktop-", "" -replace "-aot", ""
+            "desktop" {
               $isAot = "${{ matrix.aot }}" -eq "True"
               
               if ($isAot) {
-                Write-Host "Building $osName Desktop with Native AOT (self-contained)..."
+                Write-Host "Building Desktop with Native AOT (self-contained)..."
                 dotnet publish $projectFile.FullName `
                   -f $framework `
                   -c Release `
@@ -376,7 +384,7 @@ jobs:
                   -o publish `
                   /bl:build.binlog
               } else {
-                Write-Host "Building $osName Desktop (self-contained)..."
+                Write-Host "Building Desktop (self-contained)..."
                 dotnet publish $projectFile.FullName `
                   -f $framework `
                   -c Release `
@@ -401,7 +409,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: binlog-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          name: binlog-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.description }}
           path: build.binlog
           retention-days: 14
 
@@ -412,6 +420,7 @@ jobs:
           & $scriptPath `
             -PublishPath "publish" `
             -Platform "${{ matrix.platform }}" `
+            -Description "${{ matrix.description }}" `
             -Template "${{ matrix.template }}" `
             -DotNetVersion "${{ matrix.dotnet }}" `
             -UnoVersion "${{ needs.prepare-matrix.outputs.uno-version }}" `
@@ -421,14 +430,14 @@ jobs:
       - name: Upload Metrics
         uses: actions/upload-artifact@v4
         with:
-          name: metrics-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          name: metrics-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.description }}
           path: metrics.json
           retention-days: 90
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.platform }}
+          name: build-${{ matrix.dotnet }}-${{ matrix.template }}-${{ matrix.description }}
           path: publish/
           retention-days: 7
 
