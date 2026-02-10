@@ -423,14 +423,14 @@ jobs:
           
           # Determine OS from description
           # For desktop platforms: extract from description (desktop-windows-aot -> windows)
-          # For other platforms: use the platform name directly (android -> android)
+          # For other platforms: the platform name is also the OS (android -> android, ios -> ios, wasm -> wasm)
           $description = "${{ matrix.description }}"
           $platform = "${{ matrix.platform }}"
           $os = switch -Regex ($description) {
             "windows" { "windows" }
             "linux" { "linux" }
             "macos" { "macos" }
-            default { $platform }  # For android, ios, wasm - description equals platform
+            default { $platform }
           }
           
           & $scriptPath `
