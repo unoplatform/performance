@@ -193,7 +193,7 @@ switch ($Platform) {
         $metrics.fileCount = Get-FileCount -Path $PublishPath
     }
     
-    { $_ -match "^(desktop)$" } {
+    "desktop" {
         Write-Host "Measuring Desktop publish folder..." -ForegroundColor Yellow
         $metrics.packageSize = Get-DirectorySize -Path $PublishPath
         $metrics.packagePath = "publish"
