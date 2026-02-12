@@ -48,6 +48,7 @@ param(
     [string]$OS,
     
     [Parameter(Mandatory=$true)]
+    [ValidateSet('True', 'False', 'true', 'false', '$true', '$false')]
     [string]$IsAot,
     
     [Parameter(Mandatory=$true)]
