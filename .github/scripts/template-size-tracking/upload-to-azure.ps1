@@ -54,10 +54,11 @@ foreach ($file in $metricsFiles) {
     
     $dotnetVersion = $content.dotnetVersion
     $template = $content.template
-    $platform = $content.platform
+    # Use description if available (new format), otherwise use platform (old format)
+    $platformKey = if ($content.PSObject.Properties["description"]) { $content.description } else { $content.platform }
     
     # Upload to year/date-time/tfm/platform structure
-    $blobPath = "$year/$dateTimePath/net$dotnetVersion/$template-$platform.json"
+    $blobPath = "$year/$dateTimePath/net$dotnetVersion/$template-$platformKey.json"
     
     Write-Host "  -> Uploading to: $blobPath"
     
@@ -71,7 +72,7 @@ foreach ($file in $metricsFiles) {
         --output none
     
     # Also upload to "latest" for quick reference
-    $latestPath = "latest/net$dotnetVersion/$template-$platform.json"
+    $latestPath = "latest/net$dotnetVersion/$template-$platformKey.json"
     
     az storage blob upload `
         --account-name $storageAccount `

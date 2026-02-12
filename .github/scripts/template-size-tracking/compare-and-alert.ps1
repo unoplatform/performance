@@ -103,17 +103,21 @@ $alerts = @()
 $criticalAlerts = @()
 
 foreach ($current in $currentMetrics) {
+    # For matching, use description if available (new format), otherwise use platform (old format)
+    $currentKey = if ($current.PSObject.Properties["description"]) { $current.description } else { $current.platform }
+    
     # Find matching previous metric
     $previous = $previousMetrics | Where-Object {
+        $previousKey = if ($_.PSObject.Properties["description"]) { $_.description } else { $_.platform }
         $_.dotnetVersion -eq $current.dotnetVersion -and
         $_.template -eq $current.template -and
-        $_.platform -eq $current.platform
+        $previousKey -eq $currentKey
     } | Select-Object -First 1
     
     $comparison = @{
         dotnetVersion = $current.dotnetVersion
         template = $current.template
-        platform = $current.platform
+        platform = $currentKey
         currentSize = $current.packageSize
         currentCompressedSize = $current.compressedSize
         currentBuildTime = $current.buildTimeSeconds
@@ -130,9 +134,10 @@ foreach ($current in $currentMetrics) {
     # Add historical data with string keys for JSON serialization
     foreach ($daysAgo in $daysToLoad) {
         $historical = $historicalMetrics[$daysAgo] | Where-Object {
+            $historicalKey = if ($_.PSObject.Properties["description"]) { $_.description } else { $_.platform }
             $_.dotnetVersion -eq $current.dotnetVersion -and
             $_.template -eq $current.template -and
-            $_.platform -eq $current.platform
+            $historicalKey -eq $currentKey
         } | Select-Object -First 1
         
         if ($historical) {

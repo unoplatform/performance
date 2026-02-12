@@ -7,7 +7,16 @@
     Path to the publish output directory.
 
 .PARAMETER Platform
-    Target platform (android, ios, wasm, windows, desktop, macos).
+    Target platform (android, ios, wasm, desktop).
+
+.PARAMETER Description
+    Full description including platform, OS, and build type (e.g., desktop-windows-aot).
+
+.PARAMETER OS
+    Operating system (windows, linux, macos, android, ios, wasm).
+
+.PARAMETER IsAot
+    Whether this is a Native AOT build (mandatory).
 
 .PARAMETER Template
     Template type (blank, recommended).
@@ -33,6 +42,16 @@ param(
     [string]$Platform,
     
     [Parameter(Mandatory=$true)]
+    [string]$Description,
+    
+    [Parameter(Mandatory=$true)]
+    [string]$OS,
+    
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('True', 'False', 'true', 'false', '$true', '$false')]
+    [string]$IsAot,
+    
+    [Parameter(Mandatory=$true)]
     [string]$Template,
     
     [Parameter(Mandatory=$true)]
@@ -52,6 +71,9 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "=== Measuring Package Size ===" -ForegroundColor Cyan
 Write-Host "Platform: $Platform"
+Write-Host "Description: $Description"
+Write-Host "OS: $OS"
+Write-Host "Is AOT: $IsAot"
 Write-Host "Template: $Template"
 Write-Host "Publish Path: $PublishPath"
 
@@ -60,10 +82,12 @@ $metrics = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("o")
     template = $Template
     platform = $Platform
+    description = $Description
+    os = $OS
     dotnetVersion = $DotNetVersion
     unoVersion = $UnoVersion
     buildTimeSeconds = [math]::Round($BuildTime, 2)
-    isAot = $Platform -match "-aot$"
+    isAot = [System.Convert]::ToBoolean($IsAot)
 }
 
 # Function to get directory size
@@ -185,7 +209,7 @@ switch ($Platform) {
         $metrics.fileCount = Get-FileCount -Path $PublishPath
     }
     
-    { $_ -match "^(windows|desktop|macos|desktop-windows|desktop-linux|desktop-macos)" } {
+    "desktop" {
         Write-Host "Measuring Desktop publish folder..." -ForegroundColor Yellow
         $metrics.packageSize = Get-DirectorySize -Path $PublishPath
         $metrics.packagePath = "publish"
@@ -193,10 +217,13 @@ switch ($Platform) {
         # Desktop-specific metrics
         $metrics.totalPublishSize = $metrics.packageSize
         $metrics.fileCount = Get-FileCount -Path $PublishPath
+        
+        # Determine executable pattern based on OS
+        $exePattern = if ($OS -like "*windows*") { "*.exe" } else { "*" }
+        
         # Assembly count logic
         if ($metrics.isAot) {
             # For AOT, count main executable as 1 assembly if present
-            $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.assemblyCount = 1
@@ -209,7 +236,6 @@ switch ($Platform) {
             # For non-AOT, count DLLs
             $metrics.assemblyCount = (Get-ChildItem -Path $PublishPath -Filter "*.dll" -Recurse -File | Measure-Object).Count
             # Find main executable as before
-            $exePattern = if ($Platform -match "windows") { "*.exe" } else { "*" }
             $mainExe = Get-ChildItem -Path $PublishPath -Filter $exePattern -File | Where-Object { $_.Length -gt 1MB } | Sort-Object Length -Descending | Select-Object -First 1
             if ($mainExe) {
                 $metrics.mainExecutableSize = $mainExe.Length

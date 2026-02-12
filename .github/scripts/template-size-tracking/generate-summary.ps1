@@ -74,11 +74,14 @@ foreach ($dotnetGroup in $groupedByDotNet) {
 "@
     
     foreach ($metric in $dotnetGroup.Group | Sort-Object template, platform) {
+        # Get the key for matching (description if available, otherwise platform)
+        $metricKey = if ($metric.PSObject.Properties["description"]) { $metric.description } else { $metric.platform }
+        
         # Find comparison
         $comparison = $comparisons | Where-Object {
             $_.dotnetVersion -eq $metric.dotnetVersion -and
             $_.template -eq $metric.template -and
-            $_.platform -eq $metric.platform
+            $_.platform -eq $metricKey
         } | Select-Object -First 1
         
         $sizeMB = [math]::Round($metric.packageSize / 1MB, 1)
@@ -147,7 +150,7 @@ foreach ($dotnetGroup in $groupedByDotNet) {
             }
         }
         
-        $summary += "| $($metric.template) | $($metric.platform) | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator | $($historicalColumns -join ' | ') |`n"
+        $summary += "| $($metric.template) | $metricKey | $sizeMB MB | $compressedMB MB | $($metric.fileCount) | $($metric.assemblyCount) | $buildTime | $changeIndicator | $($historicalColumns -join ' | ') |`n"
     }
 }
 
