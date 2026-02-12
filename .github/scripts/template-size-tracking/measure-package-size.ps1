@@ -48,7 +48,7 @@ param(
     [string]$OS,
     
     [Parameter(Mandatory=$true)]
-    [bool]$IsAot,
+    [string]$IsAot,
     
     [Parameter(Mandatory=$true)]
     [string]$Template,
@@ -86,7 +86,7 @@ $metrics = @{
     dotnetVersion = $DotNetVersion
     unoVersion = $UnoVersion
     buildTimeSeconds = [math]::Round($BuildTime, 2)
-    isAot = $IsAot
+    isAot = [System.Convert]::ToBoolean($IsAot)
 }
 
 # Function to get directory size
