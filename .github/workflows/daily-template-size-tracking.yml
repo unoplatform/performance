@@ -105,6 +105,18 @@ jobs:
                 rid = 'android-arm64'
                 aot = $false
               }
+              if ($dotnet -eq "10.0") {
+                $matrix.include += @{
+                  description = 'android-naot'
+                  dotnet = $dotnet
+                  template = $template
+                  platform = 'android'
+                  os = 'ubuntu-latest'
+                  framework = "net$dotnet-android"
+                  rid = 'android-arm64'
+                  aot = $true
+                }
+              }
               
               # iOS (skip .NET 10 - requires Xcode 26.1 which has simulator runtime issues on GitHub runners)
               if ($dotnet -ne "10.0") {
@@ -351,14 +363,30 @@ jobs:
           
           switch ($platform) {
             "android" {
-              Write-Host "Building Android AAB..."
-              dotnet publish $projectFile.FullName `
-                -f $framework `
-                -c Release `
-                -p:AndroidPackageFormat=aab `
-                -p:AndroidKeyStore=false `
-                -o publish `
-                /bl:build.binlog
+              $isAot = "${{ matrix.aot }}" -eq "True"
+              
+              if ($isAot) {
+                # Need to use `-r $rid` to avoid: error MSB3030: Could not copy the file "bin/Release/net10.0-android/native/UnoApp_blank_android.so" because it was not found.
+                Write-Host "Building Android AAB for Native AOT..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -r $rid `
+                  -p:PublishAot=true `
+                  -p:AndroidPackageFormat=aab `
+                  -p:AndroidKeyStore=false `
+                  -o publish `
+                  /bl:build.binlog
+              } else {
+                Write-Host "Building Android AAB..."
+                dotnet publish $projectFile.FullName `
+                  -f $framework `
+                  -c Release `
+                  -p:AndroidPackageFormat=aab `
+                  -p:AndroidKeyStore=false `
+                  -o publish `
+                  /bl:build.binlog
+              }
             }
             "ios" {
               Write-Host "Building iOS IPA (signed device build)..."
