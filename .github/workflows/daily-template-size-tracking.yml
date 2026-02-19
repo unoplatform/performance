@@ -100,10 +100,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'android'
+                runtime = 'mono'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-android"
                 rid = 'android-arm64'
-                aot = $false
               }
               if ($dotnet -eq "10.0") {
                 $matrix.include += @{
@@ -111,10 +111,20 @@ jobs:
                   dotnet = $dotnet
                   template = $template
                   platform = 'android'
+                  runtime = 'nativeaot'
                   os = 'ubuntu-latest'
                   framework = "net$dotnet-android"
                   rid = 'android-arm64'
-                  aot = $true
+                }
+                $matrix.include += @{
+                  description = 'android-coreclr'
+                  dotnet = $dotnet
+                  template = $template
+                  platform = 'android'
+                  runtime = 'clr'
+                  os = 'ubuntu-latest'
+                  framework = "net$dotnet-android"
+                  rid = 'android-arm64'
                 }
               }
               
@@ -125,10 +135,10 @@ jobs:
                   dotnet = $dotnet
                   template = $template
                   platform = 'ios'
+                  runtime = 'mono'
                   os = 'macos-latest'
                   framework = "net$dotnet-ios"
                   rid = 'ios-arm64'
-                  aot = $false
                 }
               }
               
@@ -138,10 +148,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'wasm'
+                runtime = 'mono'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-browserwasm"
                 rid = 'browser-wasm'
-                aot = $false
               }
               
               # Windows Desktop
@@ -150,10 +160,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'clr'
                 os = 'windows-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'win-x64'
-                aot = $false
               }
               
               # Windows Desktop (Native AOT)
@@ -162,10 +172,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'nativeaot'
                 os = 'windows-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'win-x64'
-                aot = $true
               }
               
               # Linux Desktop
@@ -174,10 +184,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'clr'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'linux-x64'
-                aot = $false
               }
               
               # Linux Desktop (Native AOT)
@@ -186,10 +196,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'nativeaot'
                 os = 'ubuntu-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'linux-x64'
-                aot = $true
               }
               
               # macOS Desktop
@@ -198,10 +208,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'clr'
                 os = 'macos-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'osx-x64'
-                aot = $false
               }
               
               # macOS Desktop (Native AOT)
@@ -210,10 +220,10 @@ jobs:
                 dotnet = $dotnet
                 template = $template
                 platform = 'desktop'
+                runtime = 'nativeaot'
                 os = 'macos-latest'
                 framework = "net$dotnet-desktop"
                 rid = 'osx-x64'
-                aot = $true
               }
             }
           }
@@ -363,7 +373,7 @@ jobs:
           
           switch ($platform) {
             "android" {
-              $isAot = "${{ matrix.aot }}" -eq "True"
+              $isAot = "${{ matrix.runtime }}" -eq "nativeaot"
               
               if ($isAot) {
                 # Need to use `-r $rid` to avoid: error MSB3030: Could not copy the file "bin/Release/net10.0-android/native/UnoApp_blank_android.so" because it was not found.
@@ -379,9 +389,11 @@ jobs:
                   /bl:build.binlog
               } else {
                 Write-Host "Building Android AAB..."
+                $useMono = if ("${{ matrix.runtime }}" -eq "mono") { "true" } else { "false" }
                 dotnet publish $projectFile.FullName `
                   -f $framework `
                   -c Release `
+                  -p:UseMonoRuntime=$useMono `
                   -p:AndroidPackageFormat=aab `
                   -p:AndroidKeyStore=false `
                   -o publish `
@@ -412,7 +424,7 @@ jobs:
                 /bl:build.binlog
             }
             "desktop" {
-              $isAot = "${{ matrix.aot }}" -eq "True"
+              $isAot = "${{ matrix.runtime }}" -eq "nativeaot"
               
               if ($isAot) {
                 Write-Host "Building Desktop with Native AOT (self-contained)..."
@@ -464,7 +476,7 @@ jobs:
             -Platform "${{ matrix.platform }}" `
             -Description "${{ matrix.description }}" `
             -OS "${{ matrix.os }}" `
-            -IsAot ${{ matrix.aot }} `
+            -IsAot ("${{ matrix.runtime }}" -eq "nativeaot") `
             -Template "${{ matrix.template }}" `
             -DotNetVersion "${{ matrix.dotnet }}" `
             -UnoVersion "${{ needs.prepare-matrix.outputs.uno-version }}" `
