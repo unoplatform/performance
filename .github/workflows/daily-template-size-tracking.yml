@@ -128,18 +128,15 @@ jobs:
                 }
               }
               
-              # iOS (skip .NET 10 - requires Xcode 26.1 which has simulator runtime issues on GitHub runners)
-              if ($dotnet -ne "10.0") {
-                $matrix.include += @{
-                  description = 'ios'
-                  dotnet = $dotnet
-                  template = $template
-                  platform = 'ios'
-                  runtime = 'mono'
-                  os = 'macos-latest'
-                  framework = "net$dotnet-ios"
-                  rid = 'ios-arm64'
-                }
+              $matrix.include += @{
+                description = 'ios'
+                dotnet = $dotnet
+                template = $template
+                platform = 'ios'
+                runtime = 'mono'
+                os = 'macos-latest'
+                framework = "net$dotnet-ios"
+                rid = 'ios-arm64'
               }
               
               # WebAssembly
@@ -261,11 +258,17 @@ jobs:
           dotnet --version
           dotnet --list-sdks
 
-      - name: Setup Xcode (for iOS)
-        if: matrix.platform == 'ios'
+      - name: Setup Xcode for .NET 9 iOS
+        if: matrix.platform == 'ios' && matrix.dotnet == '9.0'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.0'
+
+      - name: Setup Xcode for .NET 10 iOS
+        if: matrix.platform == 'ios' && matrix.dotnet == '10.0'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
 
       - name: Download Xcode iOS Platforms (for iOS)
         if: matrix.platform == 'ios'
