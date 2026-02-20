@@ -19,7 +19,7 @@ on:
       dotnet_versions:
         description: 'Comma-separated .NET versions to test (e.g., 9.0,10.0)'
         required: false
-        default: '9.0,10.0'
+        default: '9.0,10.0,11.0'
         type: string
       templates:
         description: 'Comma-separated templates to test (blank,recommended)'
@@ -60,6 +60,12 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
+
       - name: Install Uno Templates
         id: install-templates
         shell: pwsh
@@ -85,7 +91,7 @@ jobs:
         id: set-matrix
         shell: pwsh
         run: |
-          $dotnetVersions = "${{ inputs.dotnet_versions || '9.0,10.0' }}".Split(',') | ForEach-Object { $_.Trim() }
+          $dotnetVersions = "${{ inputs.dotnet_versions || '9.0,10.0,11.0' }}".Split(',') | ForEach-Object { $_.Trim() }
           $templates = "${{ inputs.templates || 'blank,recommended' }}".Split(',') | ForEach-Object { $_.Trim() }
           
           $matrix = @{
@@ -105,7 +111,7 @@ jobs:
                 framework = "net$dotnet-android"
                 rid = 'android-arm64'
               }
-              if ($dotnet -eq "10.0") {
+              if ([version]$dotnet -ge [version]"10.0") {
                 $matrix.include += @{
                   description = 'android-naot'
                   dotnet = $dotnet
@@ -354,7 +360,7 @@ jobs:
           $dotnetVersion = "${{ matrix.dotnet }}"
           
           # Disable XAML/Resource Trimming for net10 due to https://github.com/unoplatform/uno/issues/21731
-          $enableXamlTrimming = $dotnetVersion -ne "10.0"
+          $enableXamlTrimming = [version]$dotnetVersion -le [version]"10.0"
           
           # Start timing
           $startTime = Get-Date
