@@ -19,7 +19,7 @@ on:
       dotnet_versions:
         description: 'Comma-separated .NET versions to test (e.g., 9.0,10.0)'
         required: false
-        default: '9.0,10.0'
+        default: '9.0,10.0,11.0'
         type: string
       templates:
         description: 'Comma-separated templates to test (blank,recommended)'
@@ -60,6 +60,12 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
+
       - name: Install Uno Templates
         id: install-templates
         shell: pwsh
@@ -85,7 +91,7 @@ jobs:
         id: set-matrix
         shell: pwsh
         run: |
-          $dotnetVersions = "${{ inputs.dotnet_versions || '9.0,10.0' }}".Split(',') | ForEach-Object { $_.Trim() }
+          $dotnetVersions = "${{ inputs.dotnet_versions || '9.0,10.0,11.0' }}".Split(',') | ForEach-Object { $_.Trim() }
           $templates = "${{ inputs.templates || 'blank,recommended' }}".Split(',') | ForEach-Object { $_.Trim() }
           
           $matrix = @{
@@ -105,7 +111,7 @@ jobs:
                 framework = "net$dotnet-android"
                 rid = 'android-arm64'
               }
-              if ($dotnet -eq "10.0") {
+              if ([version]$dotnet -ge [version]"10.0") {
                 $matrix.include += @{
                   description = 'android-naot'
                   dotnet = $dotnet
@@ -265,7 +271,7 @@ jobs:
           xcode-version: '26.0'
 
       - name: Setup Xcode for .NET 10 iOS
-        if: matrix.platform == 'ios' && matrix.dotnet == '10.0'
+        if: matrix.platform == 'ios' && matrix.dotnet != '9.0'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.2'
@@ -338,8 +344,31 @@ jobs:
             "desktop" { "desktop" }
           }
           
-          Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: net$dotnetVersion"
-          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform -tfm net$dotnetVersion
+          $tfm = "net$dotnetVersion"
+          if ([version]$dotnetVersion -gt [version]"10.0") {
+            $tfm = "net10.0"
+            Write-Host "Using TFM net10.0 when building for .NET 11"
+          }
+
+          Write-Host "Creating project with preset: $template, platform: $unoPlatform, tfm: $tfm"
+          dotnet new unoapp -o $projectName -preset $template -platforms $unoPlatform -tfm $tfm
+
+          if ([version]$dotnetVersion -gt [version]"10.0") {
+            $tfm = "net$dotnetVersion"
+            $projectFile = Get-ChildItem -Path $projectName -Filter "*.csproj" -Exclude "*.Tests.csproj" -Recurse | Select-Object -First 1
+            Write-Host "Updating $($projectFile.FullName) to target $tfm"
+            (Get-Content $projectFile.FullName).Replace("net10.0", $tfm) | Set-Content $projectFile.FullName
+
+            Write-Host "New $($projectFile.FullName) contents:"
+            Get-Content $projectFile.FullName | ForEach-Object { Write-Host $_ }
+
+            $globalJson = Get-ChildItem -Path $projectName -Filter "global.json" -Recurse | Select-Object -First 1
+            Write-Host "Updating $($globalJson.FullName) to allow prerelease"
+            (Get-Content $globalJson.FullName).Replace('"allowPrerelease": false', '"allowPrerelease": true') | Set-Content $globalJson.FullName
+
+            Write-Host "New $($globalJson.FullName) contents:"
+            Get-Content $globalJson.FullName | ForEach-Object { Write-Host $_ }
+          }
           
           echo "PROJECT_PATH=$projectName" >> $env:GITHUB_ENV
           echo "PROJECT_NAME=$projectName" >> $env:GITHUB_ENV
@@ -354,7 +383,7 @@ jobs:
           $dotnetVersion = "${{ matrix.dotnet }}"
           
           # Disable XAML/Resource Trimming for net10 due to https://github.com/unoplatform/uno/issues/21731
-          $enableXamlTrimming = $dotnetVersion -ne "10.0"
+          $enableXamlTrimming = [version]$dotnetVersion -le [version]"10.0"
           
           # Start timing
           $startTime = Get-Date
