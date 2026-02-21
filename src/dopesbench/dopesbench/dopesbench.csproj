@@ -1,0 +1,52 @@
+﻿<Project Sdk="Uno.Sdk">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+  <Optimize>true</Optimize>
+</PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-browserwasm;net9.0-desktop</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+
+    <!-- Display name -->
+    <ApplicationTitle>dopesbench</ApplicationTitle>
+    <ApplicationId>com.companyname.dopesbench</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationPublisher>dopesbench</ApplicationPublisher>
+    <Description>dopesbench powered by Uno Platform.</Description>
+
+    <UnoFeatures>
+<!--        WinUI;-->
+        Xaml;
+        Essentials;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" />
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Xamarin.Essentials" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="HomePage.xaml.cs">
+      <DependentUpon>HomePage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="DopesPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Components\AppBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+</Project>
