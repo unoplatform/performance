@@ -144,6 +144,18 @@ jobs:
                 framework = "net$dotnet-ios"
                 rid = 'ios-arm64'
               }
+              if ([version]$dotnet -ge [version]"11.0") {
+                $matrix.include += @{
+                  description = 'ios-coreclr'
+                  dotnet = $dotnet
+                  template = $template
+                  platform = 'ios'
+                  runtime = 'clr'
+                  os = 'macos-latest'
+                  framework = "net$dotnet-ios"
+                  rid = 'ios-arm64'
+                }
+              }
               
               # WebAssembly
               $matrix.include += @{
