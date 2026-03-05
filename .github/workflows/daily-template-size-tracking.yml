@@ -402,7 +402,7 @@ jobs:
           
           # Debug: Show what's in the project directory
           Write-Host "Contents of ${projectPath}:"
-          Get-ChildItem -Path $projectPath -Recurse | Select-Object FullName | Format-Table -AutoSize
+          Get-ChildItem -Path $projectPath -Recurse | Select-Object -ExpandProperty FullName
           
           # Single project structure - find the main .csproj
           $projectFile = Get-ChildItem -Path $projectPath -Filter "*.csproj" -Exclude "*.Tests.csproj" -Recurse | Select-Object -First 1
