@@ -414,88 +414,60 @@ jobs:
           
           Write-Host "Found project: $($projectFile.FullName)"
           Write-Host "XAML/Resource Trimming enabled: $enableXamlTrimming"
-          
+
+          $runtime = "${{ matrix.runtime }}"
+          $isAot   = $runtime -eq "nativeaot"
+          $useMono = if ($runtime -eq "mono") { "true" } else { "false" }
+
+          # Base args common to every platform
+          $publishArgs = @($projectFile.FullName, "-f", $framework, "-c", "Release")
+
           switch ($platform) {
             "android" {
-              $isAot = "${{ matrix.runtime }}" -eq "nativeaot"
-              
               if ($isAot) {
                 # Need to use `-r $rid` to avoid: error MSB3030: Could not copy the file "bin/Release/net10.0-android/native/UnoApp_blank_android.so" because it was not found.
-                Write-Host "Building Android AAB for Native AOT..."
-                dotnet publish $projectFile.FullName `
-                  -f $framework `
-                  -c Release `
-                  -r $rid `
-                  -p:PublishAot=true `
-                  -p:AndroidPackageFormat=aab `
-                  -p:AndroidKeyStore=false `
-                  -o publish `
-                  /bl:build.binlog
+                $publishArgs += @("-r", $rid, "-p:PublishAot=true")
               } else {
-                Write-Host "Building Android AAB..."
-                $useMono = if ("${{ matrix.runtime }}" -eq "mono") { "true" } else { "false" }
-                dotnet publish $projectFile.FullName `
-                  -f $framework `
-                  -c Release `
-                  -p:UseMonoRuntime=$useMono `
-                  -p:AndroidPackageFormat=aab `
-                  -p:AndroidKeyStore=false `
-                  -o publish `
-                  /bl:build.binlog
+                $publishArgs += @("-p:UseMonoRuntime=$useMono")
               }
+              $publishArgs += @("-p:AndroidPackageFormat=aab", "-p:AndroidKeyStore=false")
             }
             "ios" {
-              Write-Host "Building iOS IPA (signed device build)..."
-              dotnet publish $projectFile.FullName `
-                -f $framework `
-                -c Release `
-                -p:RuntimeIdentifier=$rid `
-                -p:ArchiveOnBuild=true `
-                -p:CodesignKey="$env:CODESIGN_KEY" `
-                -p:CodesignProvision="$env:PROVISIONING_UUID" `
-                -p:ApplicationId=uno.platform.performance `
-                -o publish `
-                /bl:build.binlog
+              $publishArgs += @(
+                "-p:RuntimeIdentifier=$rid",
+                "-p:UseMonoRuntime=$useMono",
+                "-p:ArchiveOnBuild=true",
+                "-p:CodesignKey=$env:CODESIGN_KEY",
+                "-p:CodesignProvision=$env:PROVISIONING_UUID",
+                "-p:ApplicationId=uno.platform.performance"
+              )
             }
             "wasm" {
-              Write-Host "Building WebAssembly..."
-              dotnet publish $projectFile.FullName `
-                -f $framework `
-                -c Release `
-                -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
-                -p:UnoEnableXamlTrimming=$enableXamlTrimming `
-                -o publish `
-                /bl:build.binlog
+              $publishArgs += @(
+                "-p:UnoXamlResourcesTrimming=$enableXamlTrimming",
+                "-p:UnoEnableXamlTrimming=$enableXamlTrimming"
+              )
             }
             "desktop" {
-              $isAot = "${{ matrix.runtime }}" -eq "nativeaot"
-              
+              $publishArgs += @("-r", $rid, "--self-contained", "true", "-p:PublishTrimmed=true")
               if ($isAot) {
-                Write-Host "Building Desktop with Native AOT (self-contained)..."
-                dotnet publish $projectFile.FullName `
-                  -f $framework `
-                  -c Release `
-                  -r $rid `
-                  --self-contained true `
-                  -p:PublishAot=true `
-                  -p:PublishTrimmed=true `
-                  -o publish `
-                  /bl:build.binlog
+                $publishArgs += @("-p:PublishAot=true")
               } else {
-                Write-Host "Building Desktop (self-contained)..."
-                dotnet publish $projectFile.FullName `
-                  -f $framework `
-                  -c Release `
-                  -r $rid `
-                  --self-contained true `
-                  -p:PublishTrimmed=true `
-                  -p:UnoXamlResourcesTrimming=$enableXamlTrimming `
-                  -p:UnoEnableXamlTrimming=$enableXamlTrimming `
-                  -o publish `
-                  /bl:build.binlog
+                $publishArgs += @(
+                  "-p:UnoXamlResourcesTrimming=$enableXamlTrimming",
+                  "-p:UnoEnableXamlTrimming=$enableXamlTrimming"
+                )
               }
             }
           }
+
+          # Common output and binlog args
+          $publishArgs += @("-o", "publish", "/bl:build.binlog")
+
+          $description = "Building $platform ($runtime)"
+          Write-Host $description
+          Write-Host "dotnet publish $($publishArgs -join ' ')"
+          dotnet publish $publishArgs
           
           $endTime = Get-Date
           $buildTime = ($endTime - $startTime).TotalSeconds
