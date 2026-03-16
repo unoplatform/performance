@@ -280,7 +280,7 @@ jobs:
         if: matrix.platform == 'ios' && matrix.dotnet == '9.0'
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.0'
+          xcode-version: '26.2'
 
       - name: Setup Xcode for .NET 10 iOS
         if: matrix.platform == 'ios' && matrix.dotnet != '9.0'
