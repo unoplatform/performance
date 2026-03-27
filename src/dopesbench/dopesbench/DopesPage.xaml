@@ -1,0 +1,114 @@
+﻿<Page
+    x:Class="dopesbench.DopesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:dopesbench"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="Black">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="55" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Canvas x:Name="absolute" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0">
+
+        </Canvas>
+
+        <ItemsControl x:Name="items">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="local:BindingItem">
+                    <TextBlock Text="Dope">  <!--Foreground="{x:Bind local:MainPage.ConvertColor(Color), Mode=OneWay}"-->
+                        <TextBlock.Foreground>
+                            <SolidColorBrush Color="{x:Bind Color, Mode=OneWay, FallbackValue=Red}" />
+                        </TextBlock.Foreground>
+                        <TextBlock.RenderTransform>
+                            <CompositeTransform Rotation="{x:Bind Rotation, Mode=OneWay}" TranslateX="{x:Bind Top, Mode=OneWay}" TranslateY="{x:Bind Left, Mode=OneWay}" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid x:Name="grid" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
+
+        <TextBlock x:Name="dopes"
+				   Grid.Row="0"
+				   Grid.Column="0"
+				   Margin="0,40,0,0"
+				   Padding="7,7,7,7"
+				   Width="300"
+				   Foreground="White"
+				   VerticalAlignment="Top"
+				   HorizontalAlignment="Center"
+				   Text="Warming up.."
+				   Visibility="Collapsed"/>
+
+        <StackPanel x:Name="buttons"
+					Orientation="Horizontal"
+					Grid.Row="1"
+					Grid.Column="0"
+					VerticalAlignment="Bottom"
+                    HorizontalAlignment="Center"
+					Margin="5,0,0,25" >
+
+            <Button x:Name="stop"
+				Content="Stop"
+					Background="Red"
+					HorizontalAlignment="Center"
+                    Visibility="Collapsed"
+					Click="Stop_Clicked"/>
+
+            <StackPanel x:Name="startButtons"
+					Orientation="Horizontal"
+					VerticalAlignment="Bottom"
+                    HorizontalAlignment="Center">
+
+
+                <Button x:Name="startAll"
+					Content="All"
+						Background="Green"
+						HorizontalAlignment="Center"
+						Click="startAll_Clicked"/>
+
+                <!--<Button x:Name="startMT"
+				Text="@ MT" BackgroundColor="Blue"
+				Clicked="startMT_Clicked"/>-->
+                <Button x:Name="startST"
+					Content="@ Build"
+					Background="Blue"
+					Click="startST_Clicked"/>
+                <Button x:Name="startGridST"
+					Content="@ Binding 2"
+						Background="Blue"
+					Click="startGridST_Clicked"/>
+                <Button x:Name="startChangeST"
+					Content="@ Change"
+						Background="Blue"
+					Click="startChangeST_Clicked"/>
+                <Button x:Name="startReuseST"
+					Content="@ Reuse 2"
+						Background="Blue"
+					Click="startChangeReuse_Clicked"/>
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Page>
